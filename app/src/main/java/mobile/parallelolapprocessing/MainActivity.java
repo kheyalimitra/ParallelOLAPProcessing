@@ -1,10 +1,13 @@
 package mobile.parallelolapprocessing;
 
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
+
 import Processor.*;
 
 public class MainActivity extends Activity {
@@ -14,14 +17,12 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
-    public void onButtonClick(View v){
-        try {
-            QueryProcessor.StartActivity();
-        }
-        catch(Exception ex){
 
-        }
+    public void onAsyncClick(View v) {
+        TextView t= (TextView) findViewById(R.id.button1);
+        new NetworkProcess(t).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
