@@ -7,12 +7,36 @@ import java.util.*;
 import MDXQueryProcessor.*;
 
 public class QueryProcessor {
+
+	public static final String olapServiceURL="http://192.168.0.207/OLAPService/AdventureWorks.asmx";
 	public void QueryProcessor() {
 	}
 
-	private static List<String> originalAtomicKeys = new ArrayList<>();
+	public static TreeNode GetRootDimension() throws Exception{
+		//Populate dimension tree up to two level
+		Dimension dimensionObj = new Dimension(olapServiceURL);
+		return dimensionObj.GetRootDimension();
+	}
+
+	public static TreeNode GetHierarchyDimension(TreeNode rootDimensionTree,String selection) throws Exception{
+		//Populate dimension tree up to two level
+		Dimension dimensionObj = new Dimension(olapServiceURL);
+		//User clicked on Account>Account Number
+		dimensionObj.PopulateLeafNode(rootDimensionTree,selection);
+		return rootDimensionTree;
+	}
+
+	public static HashMap<Integer,String> GetMeasures() throws Exception{
+		Measures measuresObj = new Measures(olapServiceURL);
+		return measuresObj.GetMeasures();
+	}
+
+
+
+
+
 	public static void StartActivity() throws Exception{
-		String olapServiceURL="http://192.168.0.207/OLAPService/AdventureWorks.asmx";
+
 
 		//Populate dimension tree up to two level
 		Dimension dimensionObj = new Dimension(olapServiceURL);
@@ -59,7 +83,7 @@ public class QueryProcessor {
 
 		//to store original dimension selection  before sort and merge : this will be used after data is fetched
 		//to check if any entries are found in Cache
-		QueryProcessor.originalAtomicKeys =new ArrayList<>(generatedKeys);
+		List<String> originalAtomicKeys =new ArrayList<>(generatedKeys);
 
 		//check from cache
 		List<String> nonCachedKeys = mdxQueryProcessorObj.checkCachedKeysToRemoveDuplicateEntries(generatedKeys);
@@ -70,51 +94,51 @@ public class QueryProcessor {
 			hardcodedInputMeasures.add("Internet Order Count");
 			HashMap<Integer, String> selectedMeasures = measuresObj.GetHashKeyforSelecteditems(hardcodedInputMeasures, measureMap);
 			List<Integer> selectedMesureKeyList = measuresObj.GetSelectedKeyList(hardcodedInputMeasures, measureMap);
-			mdxQueryProcessorObj.ProcessUserQuery(selectedMesureKeyList, selectedMeasures, selectedDimension, nonCachedKeys);
+			mdxQueryProcessorObj.ProcessUserQuery(selectedMesureKeyList, selectedMeasures, selectedDimension, nonCachedKeys,false);
 		}
 		else{
 			// 100% hit
 			// use original Atomic keys to fetch records from cache and display to user
 		}
 		////
-		//2nd set
-		/////
-		hardcodedInputDim = new ArrayList<String>();
-		//hardcodedInputDim.add("[Dimension].[Account].[Account Type].[All Accounts]");
-		//hardcodedInputDim.add("[Dimension].[Geography].[Country]");
-		//hardcodedInputDim.add("[Dimension].[Geography].[Geography]");
-		hardcodedInputDim.add("[Dimension].[Account].[Account Type].[All Accounts].[Revenue]");
-		hardcodedInputDim.add("[Dimension].[Account].[Account Type].[All Accounts].[Expenditures]");
-		//hardcodedInputDim.add("[Dimension].[Date].[Calendar Quarter of Year]");
-		//,
-		hardcodedInputDim.add("[Dimension].[Employee].[Gender].[All Employees].[Male]");
-		hardcodedInputDim.add("[Dimension].[Employee].[Gender].[All Employees].[Female]");
-
-		//DataCubeAxis dca = new DataCubeAxis();
-		selectedDimension = dca.GetTreeNodeListForEachAxis(rootDimensionTree,hardcodedInputDim,entryPerDimension);
-
-		//generates Key combinations
-		mdxQueryProcessorObj = new MDXQProcessor();
-		generatedKeys= mdxQueryProcessorObj.GenerateKeyCombination(selectedDimension);
-
-		//to store original dimension selection  before sort and merge : this will be used after data is fetched
-		//to check if any entries are found in Cache
-		QueryProcessor.originalAtomicKeys =new ArrayList<>(generatedKeys);
-
-		nonCachedKeys = mdxQueryProcessorObj.checkCachedKeysToRemoveDuplicateEntries(generatedKeys);
-		if(nonCachedKeys.size()>0) {
-			List<String> hardcodedInputMeasures = new ArrayList<String>();
-			hardcodedInputMeasures = new ArrayList<String>();
-			hardcodedInputMeasures.add("Internet Sales Amount");
-			hardcodedInputMeasures.add("Internet Order Count");
-			HashMap<Integer, String> selectedMeasures = measuresObj.GetHashKeyforSelecteditems(hardcodedInputMeasures, measureMap);
-			List<Integer> selectedMesureKeyList = measuresObj.GetSelectedKeyList(hardcodedInputMeasures, measureMap);
-			mdxQueryProcessorObj.ProcessUserQuery(selectedMesureKeyList, selectedMeasures, selectedDimension, nonCachedKeys);
-		}
-		else
-		{
-			// get data from cache:
-		}
+//		//2nd set
+//		/////
+//		hardcodedInputDim = new ArrayList<String>();
+//		//hardcodedInputDim.add("[Dimension].[Account].[Account Type].[All Accounts]");
+//		//hardcodedInputDim.add("[Dimension].[Geography].[Country]");
+//		//hardcodedInputDim.add("[Dimension].[Geography].[Geography]");
+//		hardcodedInputDim.add("[Dimension].[Account].[Account Type].[All Accounts].[Revenue]");
+//		hardcodedInputDim.add("[Dimension].[Account].[Account Type].[All Accounts].[Expenditures]");
+//		//hardcodedInputDim.add("[Dimension].[Date].[Calendar Quarter of Year]");
+//		//,
+//		hardcodedInputDim.add("[Dimension].[Employee].[Gender].[All Employees].[Male]");
+//		hardcodedInputDim.add("[Dimension].[Employee].[Gender].[All Employees].[Female]");
+//
+//		//DataCubeAxis dca = new DataCubeAxis();
+//		selectedDimension = dca.GetTreeNodeListForEachAxis(rootDimensionTree,hardcodedInputDim,entryPerDimension);
+//
+//		//generates Key combinations
+//		mdxQueryProcessorObj = new MDXQProcessor();
+//		generatedKeys= mdxQueryProcessorObj.GenerateKeyCombination(selectedDimension);
+//
+//		//to store original dimension selection  before sort and merge : this will be used after data is fetched
+//		//to check if any entries are found in Cache
+//		QueryProcessor.originalAtomicKeys =new ArrayList<>(generatedKeys);
+//
+//		nonCachedKeys = mdxQueryProcessorObj.checkCachedKeysToRemoveDuplicateEntries(generatedKeys);
+//		if(nonCachedKeys.size()>0) {
+//			List<String> hardcodedInputMeasures = new ArrayList<String>();
+//			hardcodedInputMeasures = new ArrayList<String>();
+//			hardcodedInputMeasures.add("Internet Sales Amount");
+//			hardcodedInputMeasures.add("Internet Order Count");
+//			HashMap<Integer, String> selectedMeasures = measuresObj.GetHashKeyforSelecteditems(hardcodedInputMeasures, measureMap);
+//			List<Integer> selectedMesureKeyList = measuresObj.GetSelectedKeyList(hardcodedInputMeasures, measureMap);
+//			mdxQueryProcessorObj.ProcessUserQuery(selectedMesureKeyList, selectedMeasures, selectedDimension, nonCachedKeys,false);
+//		}
+//		else
+//		{
+//			// get data from cache:
+//		}
 
 
 	}

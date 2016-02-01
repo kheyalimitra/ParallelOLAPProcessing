@@ -8,10 +8,16 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
-import Processor.*;
+import java.util.HashMap;
+
+import DataStructure.TreeNode;
+import mobile.parallelolapprocessing.Async.Call.DimensionHierarchy;
+import mobile.parallelolapprocessing.Async.Call.Measures;
+import mobile.parallelolapprocessing.Async.Call.RootDimension;
 
 public class MainActivity extends Activity {
-
+    public static HashMap<Integer,String> MeasuresList;
+    public static TreeNode DimensionTreeNode;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -19,8 +25,18 @@ public class MainActivity extends Activity {
     }
 
     public void onAsyncClick(View v) {
-        TextView t= (TextView) findViewById(R.id.button1);
-        new NetworkProcess(t).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        TextView dimension= (TextView) findViewById(R.id.textView1);
+        TextView measures= (TextView) findViewById(R.id.textView2);
+        // for dimensions
+        new RootDimension(dimension).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        // for measures
+        new Measures(measures).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    public void onGetHierarchyClick(View v) {
+        TextView t= (TextView) findViewById(R.id.textView1);
+        String selection="[Dimension].[Account].[Account Number]";
+        new DimensionHierarchy(t).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,selection);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package MDXQueryProcessor;
 
 //import DataRetrieval.CachedCell;
+import android.os.AsyncTask;
 import android.text.TextUtils;
 
 import org.apache.commons.lang.StringUtils;
@@ -9,6 +10,8 @@ import DataRetrieval.Cube;
 import DataStructure.TreeNode;
 //import com.sun.deploy.util.StringUtils;
 import DataCaching.*;
+import mobile.parallelolapprocessing.CacheProcess;
+import mobile.parallelolapprocessing.MDXParameterWrapper;
 //import com.sun.javafx.scene.layout.region.Margins;
 
 import java.util.*;
@@ -117,7 +120,8 @@ public class MDXQProcessor {
          * @param filteredKeys
          */
     public void ProcessUserQuery(List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,HashMap<Integer,
-            List<TreeNode>> selectedDimension,List<String>filteredKeys) throws  Exception{
+            List<TreeNode>> selectedDimension,List<String>filteredKeys,boolean isInnerTreadCalled) throws  Exception{
+
         String olapServiceURL="http://192.168.0.207/OLAPService/AdventureWorks.asmx";
         List<List<List<Integer>>> allAxisDetails = this.GetAxisDetails(selectedMeasures,filteredKeys);
         List<List<String>> cellOrdinalCombinations= new ArrayList<>();
@@ -126,22 +130,22 @@ public class MDXQProcessor {
             cellOrdinalCombinations.add(this.GenerateCellOrdinal(allAxisDetails.get(i)));
         }
 
-        List<String> inflatedQueries;
+
         List<String> requestedQueries ;
 
         List<List<String>> finalMDXQueries = new ArrayList<>();
         HashMap<Integer,TreeNode> keyValPairsForDimension = _getKeyValuePairOfSelectedDimensionsFromTree(selectedDimension);
-        requestedQueries = _generateQueryString(allAxisDetails,selectedMeasures,measureMap,keyValPairsForDimension,false);
-        inflatedQueries = _generateQueryString(allAxisDetails,selectedMeasures,measureMap,keyValPairsForDimension,true);
+        requestedQueries = GenerateQueryString(allAxisDetails, selectedMeasures, measureMap, keyValPairsForDimension, false);
         finalMDXQueries.add(requestedQueries);
-        finalMDXQueries.add(inflatedQueries);
         //below section should be split in to two separate thread
         Cube c =  new Cube(olapServiceURL);
         List<List<Long>>cubeOriginal = c.GetCubeData(finalMDXQueries.get(0).get(0));
-        List<List<Long>>cubeInflated = c.GetCubeData(finalMDXQueries.get(1).get(0));
-        this._checkAndPopulateCache(cellOrdinalCombinations.get(0),cubeOriginal);// assuming only 1 query entry
-        this._checkAndPopulateCache(cellOrdinalCombinations.get(0),cubeInflated);// assuming only 1 query entry
-
+        this.CheckAndPopulateCache(cellOrdinalCombinations.get(0), cubeOriginal);// assuming only 1 query entry
+        if(isInnerTreadCalled==false) {
+            MDXParameterWrapper pWrap = new MDXParameterWrapper(allAxisDetails, selectedMeasures, measureMap, keyValPairsForDimension, cellOrdinalCombinations, olapServiceURL);
+            new CacheProcess().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, pWrap);
+            isInnerTreadCalled=true;
+        }
     }
     private String _sortKeyCombination(String key)
     {
@@ -156,7 +160,7 @@ public class MDXQProcessor {
            return newKey;
 
     }
-    private List<String> _generateQueryString(List<List<List<Integer>>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
+    public List<String> GenerateQueryString(List<List<List<Integer>>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
                                              HashMap<Integer,TreeNode> keyValPairsForDimension, boolean isAddDescendant ){
         int nQueryCount =queryDetails.size();
         List<String> subQueries =  new ArrayList<>();
@@ -407,7 +411,7 @@ public class MDXQProcessor {
         result = newResult;
         return  _generateKeyCombinations(axisIndex+1,keys,result);
     }
-    private void _checkAndPopulateCache(List<String>combinations,  List<List<Long>> downloadedCube) {
+    public void CheckAndPopulateCache(List<String>combinations,  List<List<Long>> downloadedCube) {
         int cellMeasuresCount = downloadedCube.size();
         for(int i=0;i<cellMeasuresCount;i++)
         {
@@ -420,10 +424,16 @@ public class MDXQProcessor {
 
                 HashMap<Long, Long> keyVal =  new HashMap<>();
                 //update existing cache
+                String[] measureList = measure.replace("[","").replace("]","").split(",");
                 if(DataCaching.CachedDataCubes.containsKey(dimensionCombination)){
-                    DataCaching.CachedDataCubes.get(dimensionCombination).put(Long.parseLong(measure),downloadedCube.get(i).get(0));
+                    for(int j=0;j<measureList.length;j++)
+                    {
+                        DataCaching.CachedDataCubes.get(dimensionCombination).put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
+                    }
                 }else{
-                    keyVal.put(Long.parseLong(measure), downloadedCube.get(i).get(0));
+                    for(int j=0;j<measureList.length;j++) {
+                        keyVal.put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
+                    }
                     DataCaching.CachedDataCubes.put(combination.substring(combination.indexOf("#")+1),keyVal);
                 }
 
