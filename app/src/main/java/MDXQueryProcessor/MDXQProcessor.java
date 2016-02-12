@@ -1,20 +1,16 @@
 package MDXQueryProcessor;
 
-//import DataRetrieval.CachedCell;
-import android.os.AsyncTask;
 import android.text.TextUtils;
 
 import org.apache.commons.lang.StringUtils;
-
 import DataRetrieval.Cube;
 import DataStructure.TreeNode;
-//import com.sun.deploy.util.StringUtils;
-import DataCaching.*;
-import mobile.parallelolapprocessing.CacheProcess;
-import mobile.parallelolapprocessing.MDXParameterWrapper;
-//import com.sun.javafx.scene.layout.region.Margins;
+import Processor.QueryProcessor;
+import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
+import mobile.parallelolapprocessing.MainActivity;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by KheyaliMitra on 1/5/2016.
@@ -55,7 +51,7 @@ public class MDXQProcessor {
     {
         for(int i=0;i<keys.size();i++)
         {
-            if(DataCaching.CachedDataCubes.containsKey(keys.get(i)))
+            if(MainActivity.CachedDataCubes.containsKey(keys.get(i)))
             {
                 keys.remove(i--);// to reset the index field for iteration
             }
@@ -79,13 +75,12 @@ public class MDXQProcessor {
     public List<String> GenerateCellOrdinal(List<List<Integer>> axisList) {
         List<String> Combinations = new ArrayList<>();
         List<String> tempCombinations = new ArrayList<>();
-
-        int nCombinationCount = axisList.size();
-
-        for(int i=0;i<nCombinationCount;i++){
-            Combinations.add(axisList.get(i).toString());
+       // Combinations = axisList.get(0).stream().map(String::valueOf).collect(Collectors.toList());
+        for(int i=0;i<axisList.get(0).size();i++)
+        {
+            Combinations.add(axisList.get(0).get(i).toString());
         }
-        //Combinations = axisList.get(0).stream().map(String::valueOf).collect(Collectors.toList());
+        int nCombinationCount = axisList.size();
         for(int i=1; i<nCombinationCount;i++){
             List<Integer> axis = axisList.get(i);
 
@@ -120,9 +115,9 @@ public class MDXQProcessor {
          * @param filteredKeys
          */
     public void ProcessUserQuery(List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,HashMap<Integer,
-            List<TreeNode>> selectedDimension,List<String>filteredKeys,boolean isInnerTreadCalled) throws  Exception{
+            List<TreeNode>> selectedDimension,List<String>filteredKeys,boolean isInnerThreadCalled) throws  Exception{
 
-        String olapServiceURL="http://192.168.0.207/OLAPService/AdventureWorks.asmx";
+        //String olapServiceURL="http://192.168.0.207/OLAPService/AdventureWorks.asmx";
         List<List<List<Integer>>> allAxisDetails = this.GetAxisDetails(selectedMeasures,filteredKeys);
         List<List<String>> cellOrdinalCombinations= new ArrayList<>();
         int queryCount =allAxisDetails.size();
@@ -138,14 +133,28 @@ public class MDXQProcessor {
         requestedQueries = GenerateQueryString(allAxisDetails, selectedMeasures, measureMap, keyValPairsForDimension, false);
         finalMDXQueries.add(requestedQueries);
         //below section should be split in to two separate thread
-        Cube c =  new Cube(olapServiceURL);
+        Cube c =  new Cube(QueryProcessor.olapServiceURL);
+        //only for testing:
+        //String queries = "select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Geography].[Geography].[All Geographies].[Australia].[New South Wales]},2,LEAVES) on axis(1) ,DESCENDANTS({[Date].[Calendar].[All Periods].[CY 2006].[H1 CY 2006].[Q1 CY 2006]},2,LEAVES) on axis(2) from [Adventure Works]";
+        //"select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Customer].[Education].[All Customers]},1,LEAVES) on axis(1) ,DESCENDANTS({[Date].[Calendar].[All Periods].[CY 2008]},4,LEAVES) on axis(2) from [Adventure Works]";
         List<List<Long>>cubeOriginal = c.GetCubeData(finalMDXQueries.get(0).get(0));
+
         this.CheckAndPopulateCache(cellOrdinalCombinations.get(0), cubeOriginal);// assuming only 1 query entry
-        if(isInnerTreadCalled==false) {
-            MDXParameterWrapper pWrap = new MDXParameterWrapper(allAxisDetails, selectedMeasures, measureMap, keyValPairsForDimension, cellOrdinalCombinations, olapServiceURL);
-            new CacheProcess().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, pWrap);
-            isInnerTreadCalled=true;
-        }
+
+//        if(isInnerThreadCalled==false) {
+                      //if (authTask != null && authTask.getStatus() == AsyncTask.Status.FINISHED) {
+        // start this once the previous is done
+        MDXUserQuery.allAxisDetails = allAxisDetails;
+        MDXUserQuery.selectedMeasures = selectedMeasures;
+        MDXUserQuery.measureMap = measureMap;
+        MDXUserQuery.keyValPairsForDimension = keyValPairsForDimension;
+        MDXUserQuery.cellOrdinalCombinations = cellOrdinalCombinations;
+
+        //}
+
+//            isInnerThreadCalled=true;
+       // cache.start();
+//        }
     }
     private String _sortKeyCombination(String key)
     {
@@ -164,10 +173,11 @@ public class MDXQProcessor {
                                              HashMap<Integer,TreeNode> keyValPairsForDimension, boolean isAddDescendant ){
         int nQueryCount =queryDetails.size();
         List<String> subQueries =  new ArrayList<>();
-        for(int i=0;i<nQueryCount;i++)
+        /*for(int i=0;i<nQueryCount;i++)
         {
-            subQueries.add(this._generateSubQueryString(queryDetails.get(i),selectedMeasures,measureMap,keyValPairsForDimension,isAddDescendant));
-        }
+            subQueries.add(this._generateSubQueryString(queryDetails.get(i), selectedMeasures, measureMap, keyValPairsForDimension, isAddDescendant));
+        }*/
+        subQueries.add("select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Employee].[Employees].[All Employees]},5,LEAVES) on axis(1) ,DESCENDANTS({[Geography].[Geography].[All Geographies]},4,LEAVES) on axis(2) from [Adventure Works]");
         return subQueries;
     }
 
@@ -188,6 +198,12 @@ public class MDXQProcessor {
             for(int j=0;j<dimensionCount;j++)
             {
                 node= keyValPairsForDimension.get(dimensionkeyList.get(j));
+                if(isAddDescendant) {
+                    // this one is for all dimensions which are currently pointed as leaf node, if that is so, go 1 level up and fetch records for all leaves of same parents
+                    if (node.getChildren().size() == 0) {
+                        node = node.getParent();
+                    }
+                }
                 String dimensionName = node.getHierarchyName();
                 dimensionName =  dimensionName.substring(dimensionName.indexOf(".")+1);// removing [Dimension] part from the string : else it will not execute
                 dimensionList.add(dimensionName);
@@ -198,7 +214,7 @@ public class MDXQProcessor {
                 distance= parentNode.getLevel() - (node.getLevel() - 2);
 
                  axisWiseQuery.add("DESCENDANTS({" + TextUtils.join(",", dimensionList) + "},"
-                         + distance + ",LEAVES) on axis(" + (i) + ") ");
+                         +",LEAVES) on axis(" + (i) + ") ");//+ distance +
 
             }
             else {
@@ -411,34 +427,62 @@ public class MDXQProcessor {
         result = newResult;
         return  _generateKeyCombinations(axisIndex+1,keys,result);
     }
-    public void CheckAndPopulateCache(List<String>combinations,  List<List<Long>> downloadedCube) {
+    public boolean CheckAndPopulateCache(List<String>combinations,  List<List<Long>> downloadedCube) {
         int cellMeasuresCount = downloadedCube.size();
-        for(int i=0;i<cellMeasuresCount;i++)
-        {
-            long cellOrdinal = downloadedCube.get(i).get(1);
-            String combination = combinations.get((int)cellOrdinal);// cell ordinal :[cellMeasure, cellOrdinal]
-            if(combination!=null)
-            {
-                String dimensionCombination = this._sortKeyCombination(combination.substring(combination.indexOf("#")+1));
-                String measure = combination.substring(0,combination.indexOf("#"));
+        try {
+            for (int i = 0; i < cellMeasuresCount; i++) {
+                long cellOrdinal = downloadedCube.get(i).get(1);
+                String combination = combinations.get((int) cellOrdinal);// cell ordinal :[cellMeasure, cellOrdinal]
+                if (combination != null) {
+                    String dimensionCombination = this._sortKeyCombination(combination.substring(combination.indexOf("#") + 1));
+                    String measure = combination.substring(0, combination.indexOf("#"));
 
-                HashMap<Long, Long> keyVal =  new HashMap<>();
-                //update existing cache
-                String[] measureList = measure.replace("[","").replace("]","").split(",");
-                if(DataCaching.CachedDataCubes.containsKey(dimensionCombination)){
-                    for(int j=0;j<measureList.length;j++)
-                    {
-                        DataCaching.CachedDataCubes.get(dimensionCombination).put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
+                    HashMap<Long, Long> keyVal = new HashMap<>();
+                    //ConcurrentMap<Long, Long> keyVal = MainActivity.CachedDataCubes1.getMap("tempMap");
+
+                    //update existing cache
+                    String[] measureList = measure.replace("[", "").replace("]", "").split(",");
+                    if (MainActivity.CachedDataCubes.containsKey(dimensionCombination)){//MainActivity.CachedDataCubes.containsKey(dimensionCombination)) {
+                        for (int j = 0; j < measureList.length; j++) {
+                            //MainActivity.CachedDataCubes.get(dimensionCombination).put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
+                           MainActivity.CachedDataCubes.get(dimensionCombination).put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
+                        }
+                    } else {
+                        for (int j = 0; j < measureList.length; j++) {
+                            keyVal.put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
+                        }
                     }
-                }else{
-                    for(int j=0;j<measureList.length;j++) {
-                        keyVal.put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
-                    }
-                    DataCaching.CachedDataCubes.put(combination.substring(combination.indexOf("#")+1),keyVal);
+
                 }
-
             }
         }
+        catch (Exception ex)
+        {
+            return false;
+        }
+        return  true;
+    }
+    public List<Integer> getAncestorsPerAxis(HashMap<Integer,TreeNode>axisDetails)
+    {
+        List<Integer>leaves =  new ArrayList<>();
+        for (int i=0;i<axisDetails.size();i++){
+            List<Integer>leafNodes = _getChildList(axisDetails.get(0));
+            if(leafNodes!=null && leafNodes.size()>0)
+            {
+                leaves.addAll(leafNodes);
+            }
+        }
+        return  leaves;
+    }
+
+    private List<Integer> _getChildList(TreeNode treeNode) {
+        List<Integer> nodeList =  new ArrayList<>();
+        List<TreeNode> nodes = treeNode.getChildren();
+        for(int i=0;i<nodes.size();i++)
+        {
+            nodeList.add(nodes.get(i).getNodeCounter());
+        }
+        return nodeList;
     }
 
 }

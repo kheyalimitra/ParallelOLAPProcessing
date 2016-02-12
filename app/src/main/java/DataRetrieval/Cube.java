@@ -1,5 +1,7 @@
 package DataRetrieval;
 
+import android.util.Log;
+
 import DataStructure.TreeNode;
 import org.json.simple.parser.JSONParser;
 
@@ -7,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+
 
 /**
  * Created by KheyaliMitra on 1/9/2016.
@@ -44,11 +47,16 @@ public class Cube{
      */
     public List<List<Long>> GetCubeData(String operationName,String paramName, String paramValue) throws Exception
     {
+        long startTime = System.currentTimeMillis();
         Soap sp =  new Soap();
         HashMap<String,Object> param =  new HashMap<>();
         Object obj = paramValue;
         param.put(paramName,obj);
         String result = sp.GetJSONString(this._olapServiceURL,operationName,param);
+        long endtime = System.currentTimeMillis() -startTime;
+        if (!Log.isLoggable("MDXQueryDownload", Log.VERBOSE))
+            Log.v("MyApplicationTag", "time to download JSON from server: "+ endtime);
+
         //create JSON parser object
         JSONParser parser = new JSONParser();
         //parse dimension string returned SOAP

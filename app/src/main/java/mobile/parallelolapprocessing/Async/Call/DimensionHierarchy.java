@@ -19,7 +19,6 @@ import mobile.parallelolapprocessing.MainActivity;
 public class DimensionHierarchy extends AsyncTask<Object,Void, TreeNode>{
 
     TextView dimension;
-    HashMap<Integer,String> measuresList;
     public  DimensionHierarchy(TextView dimension) {
         this.dimension = dimension;
     }
@@ -44,5 +43,6 @@ public class DimensionHierarchy extends AsyncTask<Object,Void, TreeNode>{
     protected void onPostExecute(TreeNode resultTree) {
         MainActivity.DimensionTreeNode = resultTree;
         messageHandler.sendEmptyMessage(0);
+        this.cancel(true);
     }
 }

@@ -14,7 +14,6 @@ import org.json.simple.parser.JSONParser;
  */
 public class DataCaching {
 
-    public static HashMap<String, HashMap<Long, Long>> CachedDataCubes = new HashMap();
 
 
 

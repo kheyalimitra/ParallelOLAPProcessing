@@ -12,7 +12,7 @@ import java.util.*;
  */
 public class Dimension {
     private String _soap_Address;// = "http://192.168.0.207/OLAPService/AdventureWorks.asmx";//"http://webolap.cmpt.sfu.ca/ElaWebService/Service.asmx";
-    private int _nodeCounter=1;
+    private static int _nodeCounter=1;
     private String _populateLeafNode_ParameterName="Hierarchy";
     private  String _populateLeafNode_OperationName="MetaData2";
     private String _rootOperationName = "Dimen";

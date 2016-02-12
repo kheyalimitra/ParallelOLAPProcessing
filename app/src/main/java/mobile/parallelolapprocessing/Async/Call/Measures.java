@@ -43,5 +43,6 @@ public class Measures extends AsyncTask<Void,Void,HashMap<Integer,String>> {
         protected void onPostExecute(HashMap<Integer, String> resultList) {
         MainActivity.MeasuresList = resultList;
         messageHandler.sendEmptyMessage(0);
+            this.cancel(true);
     }
 }

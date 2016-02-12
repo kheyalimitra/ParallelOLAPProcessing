@@ -40,5 +40,6 @@ public class RootDimension extends AsyncTask<Void,Void,TreeNode> {
     protected void onPostExecute(TreeNode resultNode) {
         MainActivity.DimensionTreeNode = resultNode;
         messageHandler.sendEmptyMessage(0);
+        this.cancel(true);
     }
 }
