@@ -49,11 +49,11 @@ public class MDXQProcessor {
      */
     public List<String> checkCachedKeysToRemoveDuplicateEntries(List<String>keys)
     {
-        for(int i=0;i<keys.size();i++)
-        {
-            if(MainActivity.CachedDataCubes.containsKey(keys.get(i)))
-            {
-                keys.remove(i--);// to reset the index field for iteration
+        if(MainActivity.CachedDataCubes.size()>0) {
+            for (int i = 0; i < keys.size(); i++) {
+                if (MainActivity.CachedDataCubes.containsKey(keys.get(i))) {
+                    keys.remove(i--);// to reset the index field for iteration
+                }
             }
         }
         return  keys;
@@ -173,11 +173,11 @@ public class MDXQProcessor {
                                              HashMap<Integer,TreeNode> keyValPairsForDimension, boolean isAddDescendant ){
         int nQueryCount =queryDetails.size();
         List<String> subQueries =  new ArrayList<>();
-        /*for(int i=0;i<nQueryCount;i++)
+        for(int i=0;i<nQueryCount;i++)
         {
             subQueries.add(this._generateSubQueryString(queryDetails.get(i), selectedMeasures, measureMap, keyValPairsForDimension, isAddDescendant));
-        }*/
-        subQueries.add("select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Employee].[Employees].[All Employees]},5,LEAVES) on axis(1) ,DESCENDANTS({[Geography].[Geography].[All Geographies]},4,LEAVES) on axis(2) from [Adventure Works]");
+        }
+       // subQueries.add("select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Employee].[Employees].[All Employees]},5,LEAVES) on axis(1) ,DESCENDANTS({[Geography].[Geography].[All Geographies]},4,LEAVES) on axis(2) from [Adventure Works]");
         return subQueries;
     }
 
@@ -451,6 +451,7 @@ public class MDXQProcessor {
                         for (int j = 0; j < measureList.length; j++) {
                             keyVal.put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
                         }
+                        MainActivity.CachedDataCubes.put(dimensionCombination,keyVal);
                     }
 
                 }

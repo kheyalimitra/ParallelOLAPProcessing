@@ -2,6 +2,8 @@ package DataRetrieval;
 import android.text.TextUtils;
 
 import DataStructure.TreeNode;
+import mobile.parallelolapprocessing.DimensionTree;
+
 import org.json.simple.parser.JSONParser;
 import java.util.*;
 
@@ -260,6 +262,7 @@ public class Dimension {
      */
     private TreeNode _setLeafNode(TreeNode rootTree, Object jsonObject, String hierarchy) {
         TreeNode grandChildNode = this._getLeafTreeNodeFromroot(rootTree,hierarchy);
+        DimensionTree.HierarchyNode = grandChildNode;
         TreeNode gGrandChildTree = this._setGGrandTree(jsonObject,grandChildNode);
         this._nodeCounter  = grandChildNode.addChildNode(gGrandChildTree,this._nodeCounter );
         this._treeHiearchyMap.put(this._nodeCounter,gGrandChildTree.getHierarchyName());

@@ -154,7 +154,33 @@ public class CacheProcess implements Runnable {//AsyncTask<Void,Void,String> {//
     }
      @Override
     public void run() {
-        try {
+         try {
+             start = System.currentTimeMillis();
+             if (!Log.isLoggable("MDXQueryDownload", Log.VERBOSE))
+                 Log.v("MyApplicationTag", "Inflated StartMDXQueryDownload started:");
+             Cube c = new Cube(olapServerURL);
+             MDXQProcessor mdxQ = new MDXQProcessor();
+             List<HashMap<Integer, TreeNode>> allLeaves = _getLeavesPerAxis(keyValPairsForDimension, allAxisDetails.get(0));
+             List<List<List<Integer>>> newAxisDetails = _generateNewAxisDetails(allLeaves, allAxisDetails);
+             List<List<String>> cellOrdinalCombinations = new ArrayList<>();
+             int queryCount = allAxisDetails.size();
+             for (int i = 0; i < queryCount; i++) {
+                 cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
+             }
+
+             List<String> inflatedQueries = mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
+                     keyValPairsForDimension, true);
+             List<List<Long>> cubeInflated = c.GetCubeData(inflatedQueries.get(0));
+             long endTime = System.currentTimeMillis() - start;
+             if (!Log.isLoggable("MDXQueryDownload", Log.VERBOSE))
+                 Log.v("MyApplicationTag", "Inflated query down load time from server: " + endTime);
+
+             mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), cubeInflated);// assuming only 1 query entry
+         }
+         catch(Exception e){
+             String ex =  e.getMessage();
+         }
+       /* try {
             Cube c =  new Cube(QueryProcessor.olapServiceURL);
             MDXQProcessor mdxQ = new MDXQProcessor();
             List<String> inflatedQueries = mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
@@ -173,7 +199,7 @@ public class CacheProcess implements Runnable {//AsyncTask<Void,Void,String> {//
         }
         catch(Exception ex){
             String e =  ex.getMessage();
-        }
+        }*/
     }
     public void start ()
     {

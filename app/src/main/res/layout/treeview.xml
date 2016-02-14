@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/DimensionTreeNodeNode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="@android:color/holo_blue_dark"
+        android:padding="2dp"
+        android:text="Dimensions/Hierarchy"
+        android:textSize="14sp"
+        android:layout_marginLeft="4dp"/>
+
+    <RelativeLayout
+        android:id="@+id/DimensionListView"
+        android:layout_width="match_parent"
+        android:layout_height="230dp"
+        android:layout_below="@id/DimensionTreeNodeNode"
+        android:layout_marginLeft="4dp"/>
+
+    <TextView
+        android:id="@+id/MeasureListNode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/DimensionListView"
+        android:background="@android:color/holo_blue_dark"
+        android:padding="2dp"
+        android:text="Measures Heading :"
+        android:textSize="14sp"
+        android:layout_marginLeft="4dp"/>
+
+    <RelativeLayout
+        android:id="@+id/MeasureListView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/MeasureListNode"
+        android:layout_marginLeft="4dp">
+        <Button
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:text="Analyze"
+            android:id="@+id/AnalyzeButton"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true" />
+    </RelativeLayout>
+    <TextView
+        android:id="@+id/finalSelections"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/DimensionListView"
+        android:layout_alignParentTop="true"
+        android:background="@android:color/holo_blue_dark"
+        android:padding="2dp"
+        android:text="Please click selection to remove from query list:"
+        android:textSize="14sp" />
+    <ListView
+        android:layout_height="match_parent"
+        android:layout_width="300dp"
+        android:id="@+id/queryView"
+        android:layout_below="@+id/finalSelections"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textSize="12sp"
+        android:layout_marginLeft="4dp"/>
+    <Button
+        android:layout_width="90dp"
+        android:layout_height="55dp"
+        android:text="Execute"
+        android:id="@+id/executeButton"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:textSize="14sp" />
+</RelativeLayout>

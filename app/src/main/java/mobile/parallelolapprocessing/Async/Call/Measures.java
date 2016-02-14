@@ -13,11 +13,36 @@ import mobile.parallelolapprocessing.MainActivity;
 /**
  * Created by KheyaliMitra on 1/31/2016.
  */
-public class Measures extends AsyncTask<Void,Void,HashMap<Integer,String>> {
+public class Measures extends Thread{
+    private Thread dataDnldThread;
+    public  static Boolean isCallSucceed =false;
+    @Override
+    public void run() {
+        try {
+            MainActivity.MeasuresList = QueryProcessor.GetMeasures();
+            isCallSucceed =true;
+        }
+        catch(Exception e){
+            String ex =  e.getMessage();
+            isCallSucceed = false;
+        }
 
-    TextView measures;
-    public  Measures(TextView measures) {
-        this.measures = measures;
+    }
+    public void start ()
+    {
+        if (dataDnldThread == null)
+        {
+            dataDnldThread = new Thread (this);
+            dataDnldThread.start ();
+
+
+        }
+    }
+/*extends AsyncTask<Void,Void,HashMap<Integer,String>> {
+
+    MainActivity mainObj;
+    public  Measures(MainActivity main) {
+        mainObj = main;
     }
     @Override
     protected HashMap<Integer, String> doInBackground(Void... params) {
@@ -30,19 +55,9 @@ public class Measures extends AsyncTask<Void,Void,HashMap<Integer,String>> {
         }
         return null;
     }
-
-
-
-    private Handler messageHandler = new Handler() {
-
-        public void handleMessage(Message msg) {
-            measures.setText(MainActivity.MeasuresList.get(0));
-        }
-    };
-
         protected void onPostExecute(HashMap<Integer, String> resultList) {
         MainActivity.MeasuresList = resultList;
-        messageHandler.sendEmptyMessage(0);
+        //messageHandler.sendEmptyMessage(0);
             this.cancel(true);
-    }
+    }*/
 }
