@@ -24,7 +24,7 @@ public class Cube{
     List<Integer[]> measures = new ArrayList<>();
     HashMap<Integer,List<TreeNode>> children =  new HashMap<>();
 
-    private String _olapServiceURL = "http://192.168.0.207/OLAPService/AdventureWorks.asmx";
+    private String _olapServiceURL = "http://webolap.cmpt.sfu.ca/ElaWebService/Service.asmx;";//"http://192.168.0.207/OLAPService/AdventureWorks.asmx";
     private String _operationName = "subCubeJSON";
     private String _paramName = "input";
 

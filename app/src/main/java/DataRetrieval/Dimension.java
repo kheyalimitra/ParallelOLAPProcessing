@@ -55,7 +55,7 @@ public class Dimension {
         JSONParser parser = new JSONParser();
         //parse dimension string returned SOAP
         Object jsonObject = parser.parse(dimensionString);
-        return _generateTreeFromJSONObject(jsonObject,"Dimension");
+        return _generateTreeFromJSONObject(jsonObject, "Dimension");
     }
 
     /***
@@ -84,7 +84,7 @@ public class Dimension {
         JSONParser parser = new JSONParser();
         //parse dimension string returned SOAP
         Object jsonObject = parser.parse(jsonString);
-        this._setLeafNode(RootTree,jsonObject,ParamVal);
+        this._setLeafNode(RootTree, jsonObject, ParamVal);
     }
     public void PopulateLeafNode(TreeNode RootTree, String ParamVal) throws Exception {
         this.PopulateLeafNode(RootTree,this._populateLeafNode_ParameterName,ParamVal,this._populateLeafNode_OperationName);
@@ -282,6 +282,10 @@ public class Dimension {
 
         //Root Node of Dimension Tree
         TreeNode rootNode = null;
+        TreeNode childNode1 = null;
+        TreeNode childNode2 = null;
+        TreeNode childNode3 = null;
+        TreeNode childNode4 = null;
 
         //Iterate through JSON Object to generate parent and its child nodes and then finally attach to its root node.
         Iterator parentIterator = treeDetails.iterator();
@@ -295,18 +299,60 @@ public class Dimension {
             // we are not considering any null or blank entry here
             if(nodeNameHierarchy.length>2) {
                 String currentNodeName = nodeNameHierarchy[1];
+                // level 0
                 if (this._getGGrandRootLevel(nodeName) == 0) {
                     // sets hierarchy node names for this root node
                     rootNode = new TreeNode(currentNodeName, (relativeRootNode!=null? relativeRootNode.getHierarchyName():"") + ".[" + currentNodeName + "]");
                     // add full hierarchy name along with hash code
                     this._treeHiearchyMap.put(this._nodeCounter, rootNode.getHierarchyName());
                     this.dimensionHiearchyMap.put(this._nodeCounter,rootNode);
-                } else {
-                    TreeNode childNode = new TreeNode(nodeNameHierarchy[1]);
-                    //get hierarchy name of child node  and add to map table
-                    this._nodeCounter = rootNode.addChildNode(childNode, this._nodeCounter);
-                    this._treeHiearchyMap.put(this._nodeCounter, childNode.getHierarchyName());
-                    this.dimensionHiearchyMap.put(this._nodeCounter,childNode);
+                } else
+                { // as seen in JSON object, all child nodes are appearing sequentially 1.>2.>3> 4 for a particular parent
+                    // it is sorted, so we do not need to search for whose children is who/
+                    // level 1
+
+                    if(this._getGGrandRootLevel(nodeName)==1){
+                        childNode1 = new TreeNode(currentNodeName);
+                        //get hierarchy name of child node  and add to map table
+                        this._nodeCounter = rootNode.addChildNode(childNode1, this._nodeCounter);
+                        this._treeHiearchyMap.put(this._nodeCounter, childNode1.getHierarchyName());
+                        this.dimensionHiearchyMap.put(this._nodeCounter,childNode1);
+                    }
+                    else{
+                        // level 2
+                        if(this._getGGrandRootLevel(nodeName)==2){
+                            childNode2 = new TreeNode(currentNodeName);
+                            //get hierarchy name of  node  and add to map table
+                            this._nodeCounter = childNode1.addChildNode(childNode2, this._nodeCounter);
+                            this._treeHiearchyMap.put(this._nodeCounter, childNode2.getHierarchyName());
+                            this.dimensionHiearchyMap.put(this._nodeCounter,childNode2);
+
+                        }
+                        else {
+                            // level 3
+
+                            if(this._getGGrandRootLevel(nodeName)==3){
+                                //get hierarchy name of  node  and add to map table
+                                childNode3 = new TreeNode(currentNodeName);
+                                this._nodeCounter = childNode2.addChildNode(childNode3, this._nodeCounter);
+                                this._treeHiearchyMap.put(this._nodeCounter, childNode3.getHierarchyName());
+                                this.dimensionHiearchyMap.put(this._nodeCounter,childNode3);
+
+                            }
+                            else
+                            {
+                                // level 4
+                                if(this._getGGrandRootLevel(nodeName)==4){
+                                    childNode4 = new TreeNode(currentNodeName);
+                                    //get hierarchy name of  node  and add to map table
+                                    this._nodeCounter = childNode3.addChildNode(childNode4, this._nodeCounter);
+                                    this._treeHiearchyMap.put(this._nodeCounter, childNode4.getHierarchyName());
+                                    this.dimensionHiearchyMap.put(this._nodeCounter,childNode4);
+
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

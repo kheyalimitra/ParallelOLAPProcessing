@@ -3,10 +3,12 @@ import DataRetrieval.*;
 import DataStructure.TreeNode;
 import java.util.*;
 import MDXQueryProcessor.*;
+import mobile.parallelolapprocessing.MainActivity;
 
 public class QueryProcessor {
 
 	public static final String olapServiceURL="http://webolap.cmpt.sfu.ca/ElaWebService/Service.asmx";//"http://192.168.0.207/OLAPService/AdventureWorks.asmx";
+	public static HashMap<String,Long> resultSet;
 	public void QueryProcessor() {
 	}
 
@@ -29,8 +31,7 @@ public class QueryProcessor {
 		return measuresObj.GetMeasures();
 	}
 
-	public static void StartActivity() throws Exception{
-	}
+
 
 	public boolean GetUserRequestedQueryData(int[] entryPerDimension, TreeNode rootDimensionTree,List<String>hardcodedInputDim,Measures measuresObj,HashMap<Integer,String>measureMap,
 											 List<String> hardcodedInputMeasures) throws Exception {
@@ -52,16 +53,48 @@ public class QueryProcessor {
 			if (nonCachedKeys.size() > 0) {
 				HashMap<Integer, String> selectedMeasures = measuresObj.GetHashKeyforSelecteditems(hardcodedInputMeasures, measureMap);
 				List<Integer> selectedMesureKeyList = measuresObj.GetSelectedKeyList(hardcodedInputMeasures, measureMap);
-				mdxQueryProcessorObj.ProcessUserQuery(selectedMesureKeyList, selectedMeasures, selectedDimension, nonCachedKeys, false);
+				// flush entries from previous queries
+				resultSet =  new HashMap<>();
+				resultSet = mdxQueryProcessorObj.ProcessUserQuery(selectedMesureKeyList, selectedMeasures, selectedDimension, nonCachedKeys, false);
+				// if there is a hit frm cache, take matched part from cache and add it to result set
+				if(originalAtomicKeys.size() != resultSet.size())
+				{
+					resultSet = _getQueryResultFromCache(originalAtomicKeys,resultSet);
+				}
 			} else {
 				// 100% hit
 				// use original Atomic keys to fetch records from cache and display to user
+					if(resultSet.size()==originalAtomicKeys.size()){
+						return true;
+					}
 			}
 		} catch (Exception ex) {
 			return false;
 		}
 		return  true;
 	}
+
+	private HashMap<String, Long>  _getQueryResultFromCache(List<String> originalAtomicKeys, HashMap<String, Long> resultSet) {
+		HashMap<String, Long> newResultSet =  new HashMap<>(resultSet);
+		if(originalAtomicKeys.size()>0)
+		{
+			for(int i=0;i<originalAtomicKeys.size();i++)
+			{
+				if(resultSet!=null && resultSet.size()>0){
+					String key = originalAtomicKeys.get(i);
+					if(!resultSet.containsKey(key)){
+						// fetch value from Cache
+						if(MainActivity.CachedDataCubes.containsKey(key)){
+							newResultSet.put(key, MainActivity.CachedDataCubes.get(key).get(0));
+						}
+					}
+				}
+			}
+		}
+		return newResultSet;
+	}
+
+
 
 
 }

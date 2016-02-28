@@ -22,9 +22,16 @@ import mobile.parallelolapprocessing.MainActivity;
 public class RootDimension extends Thread{//extends AsyncTask<Void,Void,TreeNode> {
     private Thread dataDnldThread;
     public  static Boolean isCallSucceed =false;
+    public  static Boolean isHierarchyCall ;
+
+    public  RootDimension() {
+        isHierarchyCall =false;
+    }
+
     @Override
     public void run() {
         try {
+
             MainActivity.DimensionTreeNode = QueryProcessor.GetRootDimension();
             isCallSucceed =true;
         }
@@ -40,38 +47,8 @@ public class RootDimension extends Thread{//extends AsyncTask<Void,Void,TreeNode
         {
             dataDnldThread = new Thread (this);
             dataDnldThread.start ();
-
-
         }
     }
 
-   /* public  RootDimension(MainActivity main) {
-        mainObj = main;
-    }
 
-    private Handler messageHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-
-            //mainObj.PopulateTreeHierarchy();
-        }
-    };
-
-    @Override
-    protected TreeNode doInBackground(Void... params) {
-        TreeNode rootDimension= new TreeNode("Dimension");
-        try {
-            rootDimension = QueryProcessor.GetRootDimension();
-        }
-        catch (Exception ex){
-
-        }
-        return rootDimension;
-    }
-
-    protected void onPostExecute(TreeNode resultNode) {
-        MainActivity.DimensionTreeNode = resultNode;
-        messageHandler.sendEmptyMessage(0);
-        this.cancel(true);
-    }*/
 }

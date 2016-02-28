@@ -38,26 +38,5 @@ public class Measures extends Thread{
 
         }
     }
-/*extends AsyncTask<Void,Void,HashMap<Integer,String>> {
 
-    MainActivity mainObj;
-    public  Measures(MainActivity main) {
-        mainObj = main;
-    }
-    @Override
-    protected HashMap<Integer, String> doInBackground(Void... params) {
-        try {
-            return  QueryProcessor.GetMeasures();
-        }
-        catch (Exception ex)
-        {
-
-        }
-        return null;
-    }
-        protected void onPostExecute(HashMap<Integer, String> resultList) {
-        MainActivity.MeasuresList = resultList;
-        //messageHandler.sendEmptyMessage(0);
-            this.cancel(true);
-    }*/
 }

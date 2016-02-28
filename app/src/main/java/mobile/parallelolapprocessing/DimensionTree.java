@@ -8,7 +8,9 @@ import android.app.Fragment;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -23,14 +25,23 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.unnamed.b.atv.model.TreeNode;
 import com.unnamed.b.atv.view.AndroidTreeView;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import DataCaching.DataCaching;
+import Processor.QueryProcessor;
 import mobile.parallelolapprocessing.Async.Call.DimensionHierarchy;
+import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
+import mobile.parallelolapprocessing.Async.Call.RootDimension;
 import mobile.parallelolapprocessing.Async.IconTreeItem;
+import mobile.parallelolapprocessing.Async.ParameterWrapper.MDXUserQueryInput;
 
 public class DimensionTree extends Fragment{
 
@@ -85,34 +96,19 @@ public class DimensionTree extends Fragment{
         final ViewGroup measureContainer = (ViewGroup) rootView.findViewById(R.id.MeasureListView);
         final Button analyzeBtn = (Button)rootView.findViewById(R.id.AnalyzeButton);
         final Button execBtn = (Button)rootView.findViewById(R.id.executeButton);
+        final Button backBtn = (Button)rootView.findViewById(R.id.backButton);
         final ListView selectedQuery = (ListView)rootView.findViewById(R.id.queryView);
         final TextView finalSelection =(TextView)rootView.findViewById(R.id.finalSelections);
         execBtn.setVisibility(View.INVISIBLE);
         selectedQuery.setVisibility(View.INVISIBLE);
         finalSelection.setVisibility(View.INVISIBLE);
+        backBtn.setVisibility(View.INVISIBLE);
         try {
 
             View.OnClickListener buttonListener = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    _setVisibilitySettings(containerView, measureContainer, execBtn, selectedQuery, finalSelection);
-                    final LinkedHashMap<String, String> listItems = new LinkedHashMap<>();
-
-                    listItems.put("First","Selected Dimensions are given below:");
-
-                    for( int i=0;i<SelectedDimensions.size();i++) {
-                        listItems.put(SelectedDimensions.get(i), SelectedDimensions.get(i));
-                    }
-
-                    listItems.put("Second","Selected Measures are given below:");
-
-                    for( int i=0;i<SelectedMeasures.size();i++)
-                        listItems.put(SelectedMeasures.get(i), SelectedMeasures.get(i));
-                    List<String> list = new ArrayList(listItems.values());
-                    listMenuPos_Mes = list.lastIndexOf("Selected Measures are given below:");
-                    listMenuPos_Dimen = list.lastIndexOf("Selected Dimensions are given below:");
-                    queryList = list;
-                    _setAdapterOnClickListener(listItems, list, selectedQuery);
+                    _captureUserSelectionForDimensionMeasures(containerView, measureContainer, execBtn, backBtn, selectedQuery, finalSelection);
 
                 }
 
@@ -123,18 +119,126 @@ public class DimensionTree extends Fragment{
             //Populate Dimension List view
             TreeNode root = main.PopulateTreeHierarchy();
             _displayDimensionAndMeasureTreeView(savedInstanceState, main, containerView, measureContainer, root);
+
+            // button to execute user's final selection as MDX query and fetch data either from cache or from server
+            View.OnClickListener executeListener = new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View v) {
+                    // process MXD query here
+                    _processUserMDXquerySelection(selectedQuery);
+
+                }
+
+            };
+            execBtn.setOnClickListener(executeListener);
+
+            // controls actions for back button so that user can reselect and regenerate queries
+            View.OnClickListener backButtonListener =new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View v) {
+                    _manageFramControlVisibilityFromBackButton(containerView, measureContainer, execBtn, selectedQuery, finalSelection);
+                    // flush the previous selection
+                    SelectedDimensions =  new ArrayList<>();
+                    SelectedMeasures =  new ArrayList<>();
+                }
+            };
+            backBtn.setOnClickListener(backButtonListener);
+
         } catch (Exception e) {
             Toast.makeText(MainActivity.MainContext, "Error in selection. Please retry.", Toast.LENGTH_LONG).show();
         }
         return rootView;
     }
 
-    private void _setVisibilitySettings(ViewGroup containerView, ViewGroup measureContainer, Button execBtn, ListView selectedQuery, TextView finalSelection) {
+    private void _captureUserSelectionForDimensionMeasures(ViewGroup containerView, ViewGroup measureContainer, Button execBtn, Button backBtn, ListView selectedQuery, TextView finalSelection) {
+        _setVisibilitySettings(containerView, measureContainer, execBtn, backBtn, selectedQuery, finalSelection);
+        final LinkedHashMap<String, String> listItems = new LinkedHashMap<>();
+
+        listItems.put("First","Selected Dimensions are given below:");
+
+        for( int i=0;i<SelectedDimensions.size();i++) {
+            listItems.put(SelectedDimensions.get(i), SelectedDimensions.get(i));
+        }
+
+        listItems.put("Second", "Selected Measures are given below:");
+
+        for( int i=0;i<SelectedMeasures.size();i++)
+            listItems.put(SelectedMeasures.get(i), SelectedMeasures.get(i));
+        List<String> list = new ArrayList(listItems.values());
+        listMenuPos_Mes = list.lastIndexOf("Selected Measures are given below:");
+        listMenuPos_Dimen = list.lastIndexOf("Selected Dimensions are given below:");
+        queryList = list;
+        _setAdapterOnClickListener(listItems, list, selectedQuery);
+    }
+
+    private void _manageFramControlVisibilityFromBackButton(ViewGroup containerView, ViewGroup measureContainer, Button execBtn, ListView selectedQuery, TextView finalSelection) {
+        containerView.setVisibility(View.VISIBLE);
+        measureContainer.setVisibility(View.VISIBLE);
+        dimNode.setVisibility(View.VISIBLE);
+        mesNode.setVisibility(View.VISIBLE);
+        execBtn.setVisibility(View.INVISIBLE);
+        selectedQuery.setVisibility(View.INVISIBLE);
+        finalSelection.setVisibility(View.INVISIBLE);
+    }
+
+    private void _processUserMDXquerySelection(ListView selectedQuery) {
+        int measure_pos = queryList.lastIndexOf("Selected Measures are given below:");
+        List<String> measures = new ArrayList<>(queryList.subList(measure_pos+1,queryList.size()));
+        int dimen_pos = queryList.lastIndexOf("Selected Dimensions are given below:");
+        List<String> dimensions = new ArrayList<>(queryList.subList(dimen_pos+1,measure_pos));
+         // so far hard coded
+        int [] entryPerDimension ={2,2} ;
+        DataRetrieval.Measures measuresObj = new DataRetrieval.Measures(QueryProcessor.olapServiceURL);//pass url
+        MDXUserQueryInput mdxInputObj = new MDXUserQueryInput(entryPerDimension, MainActivity.DimensionTreeNode,dimensions,
+                measuresObj,MainActivity.MeasuresList,measures) ;
+
+        MDXUserQuery MDXObj = new MDXUserQuery(mdxInputObj);
+        // decide if caching is needed or not.
+        //MDXObj.compareWithPreviousQueryDimensions(entryPerDimension,dimensions);
+        long startTimer = System.currentTimeMillis();
+        try {
+            MDXObj.start();//.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,mdxInputObj);
+             while (!MDXUserQuery.isComplete) {
+                Thread.sleep(100);
+            }
+            long endTimer = System.currentTimeMillis();
+            _populateListView(selectedQuery, endTimer - startTimer);
+            // start downloading inflated query
+
+        }
+        catch (Exception e){
+
+        }
+    }
+
+
+
+
+    private void _populateListView(ListView selectedQuery, long timeTaken) {
+        // if result set has value, display it
+        if (QueryProcessor.resultSet.size()>0){
+            List<Long> results = new ArrayList<Long>(QueryProcessor.resultSet.values());
+            List<String> newList = new ArrayList<String>(results.size());
+            for (Long myInt : results) {
+                newList.add(String.valueOf(myInt));
+            }
+            newList.add("total Time taken (ms): "+String.valueOf(timeTaken));
+            SimpleArrayAdapter a = new SimpleArrayAdapter(MainActivity.MainContext,newList);
+            //Sets Adapter
+            selectedQuery.setAdapter(a);
+
+        }
+    }
+
+    private void _setVisibilitySettings(ViewGroup containerView, ViewGroup measureContainer, Button execBtn,Button backBtn, ListView selectedQuery, TextView finalSelection) {
         containerView.setVisibility(View.INVISIBLE);
         measureContainer.setVisibility(View.INVISIBLE);
         dimNode.setVisibility(View.INVISIBLE);
         mesNode.setVisibility(View.INVISIBLE);
         execBtn.setVisibility(View.VISIBLE);
+        backBtn.setVisibility(View.VISIBLE);
         selectedQuery.setVisibility(View.VISIBLE);
         finalSelection.setVisibility(View.VISIBLE);
     }
@@ -221,78 +325,18 @@ public class DimensionTree extends Fragment{
             HierarchyNode =null;
             try {
                 String child = (String) node.getValue();
-                TreeNode n = node.getRoot();
-                TreeNode p = node.getParent();
-                TreeNode grandP = p.getParent();
-                String root = (String)n.getValue();
-                String parentNode = (String) p.getValue();
-                String grandParentNode="";
-                if(grandP !=null)
-                    grandParentNode= (String)grandP.getValue();
-                String param="";
+                String root ="";
+                if(node.getRoot()!=null) {
+                    root =(String) node.getRoot().getValue();
+                }
+                List<TreeNode>parentList = _getParentListsFromDimensionSelection(node);
                 if(root.equals("Dimension")) {
-                    param="[Dimension].[";
-                    dimNode.setText("Selected: "+grandParentNode + "." + parentNode + "." + child);
-
-                    if( !parentNode.equals("Dimension/Hierarchy:")&& !parentNode.equals("Dimension")) {// if reparation is ro be avoided for multiple service call use (level==3 && node.getChildren().size()<1))
-                        param+=parentNode+"].["+child+"]";
-                        if(grandParentNode.equals("Dimension")) {
-                            SelectedDimensions.add(child);
-                        }
-                        else {
-                            if(grandParentNode.equals("Dimension/Hierarchy:"))
-                                SelectedDimensions.add(parentNode + "." + child);
-                            else
-                                SelectedDimensions.add(grandParentNode+"."+parentNode + "." + child);
-                        }
-                        List<TreeNode> children = node.getChildren();
-                        if(children.size()==0 && node.getLevel()==3) {
-
-                            DimensionHierarchy dimenHierarchyObj = new DimensionHierarchy(param);//.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, param);
-                            dimenHierarchyObj.join();
-                            dimenHierarchyObj.start();
-                            // wait for asynchronous call to fetch the records.
-                            while(DimensionTree.HierarchyNode==null){
-                                Thread.sleep(10);
-                            }
-                            List<DataStructure.TreeNode> AdventureWorksHierarchyDetails = HierarchyNode.getChildren();
-                            try {
-
-                                Iterator itr = AdventureWorksHierarchyDetails.iterator();
-                                while (itr.hasNext()) {
-                                    DataStructure.TreeNode innerNode = (DataStructure.TreeNode) itr.next();
-                                    com.unnamed.b.atv.model.TreeNode parent = new TreeNode((String)innerNode.getReference());
-                                    List<TreeNode> leaves = innerNode.getChildren();
-                                    if(leaves.size()>0) {
-                                        Iterator grandChildrenItr = leaves.iterator();
-                                        while (grandChildrenItr.hasNext()) {
-                                            DataStructure.TreeNode grandNode = (DataStructure.TreeNode) grandChildrenItr.next();
-                                            com.unnamed.b.atv.model.TreeNode leaf = new TreeNode((String) grandNode.getReference());
-                                            node.addChild(leaf);
-
-                                        }
-                                    }
-                                    //node.addChild(parent);
-                                }
-                            } catch (Exception e)
-
-                            {
-                                Toast.makeText(MainActivity.MainContext, "Some Error occurred. Please retry", Toast.LENGTH_LONG).show();
-                            }
-                        }
-                    }
+                    _populateDimensionLeaves(node, child, parentList);
 
                 }
                 else
                 {
-                    if(root.equals("Measure"))
-                    {
-                        mesNode.setText("Selected: " + child);
-                        if(!child.equals("Measures:") && !child.equals("Measure") )
-                            SelectedMeasures.add(child);
-                    }
-
-
+                    _storeMeasureClicks(child, root);
                 }
             } catch (Exception e) {
                 Toast.makeText(MainActivity.MainContext, "Can not retrieve data from service.", Toast.LENGTH_LONG).show();
@@ -300,6 +344,116 @@ public class DimensionTree extends Fragment{
             }
         }
     };
+    private List<TreeNode> _getParentListsFromDimensionSelection(TreeNode node){
+        List<TreeNode> parents= new ArrayList<>();
+        while(node.getParent()!=null){
+            TreeNode parentNode = node.getParent();
+            parents.add(parentNode);
+            node = parentNode;
+        }
+        return parents;
+    }
+    private void _storeMeasureClicks(String child, String root) {
+        if(root.equals("Measures"))
+        {
+            mesNode.setText("Selected: " + child);
+            if(!child.equals("Measures:") && !child.equals("Measures") )
+                SelectedMeasures.add(child);
+        }
+    }
+
+    private void _populateDimensionLeaves(TreeNode node, String child, List<TreeNode>parentList) throws InterruptedException {
+        String param="";
+        List<String> parentNames = new ArrayList<>();
+        for (int i=parentList.size()-1;i>=0;i--){
+            String val = (String)parentList.get(i).getValue();
+            param +=val+".";
+            if(!val.equals("Dimension/Hierarchy:")&& !val.equals("Dimension")) {
+                param +=val+".";
+                parentNames.add((val));
+            }
+        }
+        if(param.contains(".")) {
+            param = param.substring(0, param.lastIndexOf("."));
+        }
+        // if reparation is to be avoided for multiple service call use (level==3 && node.getChildren().size()<1))
+        param = _getSelectedDimensionNodeEntry(child, parentNames);
+        dimNode.setText("Selected: "+param);
+        _populateNodeHierarchy(node, param);
+
+    }
+
+    private String _getSelectedDimensionNodeEntry(String child, List<String> parentNames) {
+        String param="[Dimension].[";
+        for(int i=0;i<parentNames.size();i++){
+            param+=parentNames.get(i)+"].[";
+        }
+        param +=child+"]";
+        SelectedDimensions.add(param);
+        return  param;
+    }
+
+    private void _populateNodeHierarchy(TreeNode node, String param) throws InterruptedException {
+        List<TreeNode> children = node.getChildren();
+        if(children.size()==0 && node.getLevel()==3) {
+            MainActivity mainObj = new MainActivity();
+            mainObj.fetchHierarchyRecordsFromServer(param);
+            //_fetchHierarchyRecordsFromServer(param);
+            List<DataStructure.TreeNode> AdventureWorksHierarchyDetails = HierarchyNode.getChildren();
+            try {
+                _iterateThroughLeaves(node, AdventureWorksHierarchyDetails);
+            }
+            catch (Exception e)
+            {
+                Toast.makeText(MainActivity.MainContext, "Some Error occurred. Please retry", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private void _iterateThroughLeaves(TreeNode node, List<DataStructure.TreeNode> adventureWorksHierarchyDetails) {
+        Iterator itr = adventureWorksHierarchyDetails.iterator();
+        DataStructure.TreeNode t = (DataStructure.TreeNode) itr.next();
+        TreeNode parentNode =new TreeNode(t.getReference());
+        List<DataStructure.TreeNode> leaves = t.getChildren();
+        Iterator leafItr = leaves.iterator();
+        int maxdisplay=50;// just showing upto 50 leaves: easier to fit in to small screen
+        while (leafItr.hasNext() && maxdisplay>=0) {
+            DataStructure.TreeNode lNode = (DataStructure.TreeNode) leafItr.next();
+            // iterate through child levels (as it is coming from json 0 till 5)
+
+            TreeNode childTreeNode = new TreeNode(lNode.getReference());
+            List<DataStructure.TreeNode> children = lNode.getChildren();
+            if(children.size()>0){
+                childTreeNode = _iterateThroughchildLevels(children,childTreeNode);
+            }
+            parentNode.addChild(childTreeNode);
+            maxdisplay--;
+        }
+        node.addChild(parentNode);
+    }
+
+    private TreeNode _iterateThroughchildLevels(List<DataStructure.TreeNode> children, TreeNode childTreeNode) {
+
+        TreeNode newChildTreeNode=childTreeNode;
+        Iterator leafItr = children.iterator();
+        int maxdisplay=50;// just showing upto 50 leaves: easier to fit in to small screen
+        while (leafItr.hasNext() && maxdisplay>=0) {
+            DataStructure.TreeNode lNode = (DataStructure.TreeNode) leafItr.next();
+            // iterate through upto 5 levels (as it is coming from json 0 till 5)
+
+            TreeNode childNode = new TreeNode(lNode.getReference());
+            List<DataStructure.TreeNode> gchildren = lNode.getChildren();
+            if(gchildren.size()>0){
+                childNode = _iterateThroughchildLevels(gchildren,childNode);
+            }
+            newChildTreeNode.addChild(childNode);
+            maxdisplay--;
+        }
+
+            return newChildTreeNode;
+    }
+
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu, menu);
