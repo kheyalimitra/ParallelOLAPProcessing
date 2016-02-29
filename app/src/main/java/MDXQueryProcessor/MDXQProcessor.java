@@ -209,15 +209,16 @@ public class MDXQProcessor {
                 }
                 String dimensionName = node.getHierarchyName();
                 dimensionName =  dimensionName.substring(dimensionName.indexOf(".")+1);// removing [Dimension] part from the string : else it will not execute
-                dimensionList.add(dimensionName);
+                dimensionList.add(dimensionName+".children");
 
             }
             if(isAddDescendant){
                 TreeNode parentNode = node.getParent();// whose parent???
                 distance= parentNode.getLevel() - (node.getLevel() - 2);
+                axisWiseQuery.add("{" + TextUtils.join(",", dimensionList) + "} on axis(" + (i) + ") ");//+ distance +
 
-                 axisWiseQuery.add("DESCENDANTS({" + TextUtils.join(",", dimensionList) + "},"
-                         +",LEAVES) on axis(" + (i) + ") ");//+ distance +
+                // axisWiseQuery.add("DESCENDANTS({" + TextUtils.join(",", dimensionList) + "},"
+                  //       +",LEAVES) on axis(" + (i) + ") ");//+ distance +
 
             }
             else {
@@ -509,9 +510,9 @@ public class MDXQProcessor {
                 }
 
             }
-            if(parentEntiresPerAxis !=null && parentEntiresPerAxis.size()>0) {
+           /* if(parentEntiresPerAxis !=null && parentEntiresPerAxis.size()>0) {
                 _addEntryforInflatedParentNodes(totalSum, parentEntiresPerAxis);
-            }
+            }*/
         }
         catch (Exception ex)
         {

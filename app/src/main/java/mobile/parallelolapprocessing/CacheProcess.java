@@ -22,6 +22,7 @@ import DataRetrieval.Dimension;
 import DataStructure.TreeNode;
 import MDXQueryProcessor.MDXQProcessor;
 import Processor.QueryProcessor;
+import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
 
 /**
  * Created by KheyaliMitra on 1/31/2016.
@@ -81,11 +82,12 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
                     if(child.getChildren().size()==0)
                     {
                     // 1st time this is running and the parent node itself is leaf node:
-                    // then go back 1 level up and run for its parent
+                     // then go back 1 level up and run for its parent
                         child = child.getParent();
 
                     }
-                    parents.add(child);
+                    // old approach
+                    //parents.add(child);
                     HashMap<Integer,TreeNode> allLeaves = _getLeaves(child, new HashMap<Integer, TreeNode>());
                     Leaves.add(allLeaves);
                 }
@@ -95,7 +97,8 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
         return Leaves;
     }
     private  HashMap<Integer,TreeNode> _getLeaves(TreeNode parent,HashMap<Integer,TreeNode> oldLeaves){
-        return _iterateTreeToGenerateLeaves(parent,oldLeaves);
+       // return _iterateTreeToGenerateLeaves(parent,oldLeaves);
+        return new CacheProcessUpto1Level().iterateTreeToGenerateChildren(parent);
 
     }
 
@@ -159,7 +162,7 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
 
     @Override
     protected String doInBackground(Void... params) {
-        run();
-        return null;
+        this.run();
+        return "Success";
     }
 }

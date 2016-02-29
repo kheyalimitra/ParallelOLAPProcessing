@@ -68,7 +68,7 @@ public class MDXUserQuery implements Runnable {//extends AsyncTask<MDXUserQueryI
                 CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                         MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
                 //cache.start();
-                cache.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                //cache.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
             catch(Exception e)
             {
