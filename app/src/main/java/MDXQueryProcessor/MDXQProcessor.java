@@ -6,7 +6,9 @@ import org.apache.commons.lang.StringUtils;
 import DataRetrieval.Cube;
 import DataStructure.TreeNode;
 import Processor.QueryProcessor;
+import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
 import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
+import mobile.parallelolapprocessing.CacheProcess;
 import mobile.parallelolapprocessing.MainActivity;
 
 import java.util.*;
@@ -47,13 +49,22 @@ public class MDXQProcessor {
      * @param keys
      * @return
      */
-    public List<String> checkCachedKeysToRemoveDuplicateEntries(List<String>keys)
+    public List<String> checkCachedKeysToRemoveDuplicateEntries(List<String>keys,Set<Integer> selectedMeasures )
     {
+        List<Integer> selectedMeasuresKyes = new ArrayList<>(selectedMeasures);
         if(MainActivity.CachedDataCubes.size()>0) {
             for (int i = 0; i < keys.size(); i++) {
                 if (MainActivity.CachedDataCubes.containsKey(keys.get(i))) {
-                    QueryProcessor.resultSet.put(keys.get(i),MainActivity.CachedDataCubes.get(keys.get(i)).get(0));
-                    keys.remove(i--);// to reset the index field for iteration
+                    HashMap<Long,Long> measuresSpecificList = MainActivity.CachedDataCubes.get(keys.get(i));
+                    for(int j=0;j<measuresSpecificList.size();j++) {
+                        for(int k=0;k<selectedMeasures.size();k++){
+                            if(measuresSpecificList.containsKey(Long.parseLong(selectedMeasuresKyes.get(k).toString()))){// finding out right measures for dimension combinations
+                                QueryProcessor.resultSet.put(keys.get(i), MainActivity.CachedDataCubes.get(keys.get(i)).get(Long.parseLong(selectedMeasuresKyes.get(k).toString())));
+                                keys.remove(i--);// to reset the index field for iteration
+                            }
+                        }
+
+                    }
                 }
                 else{
 
@@ -138,7 +149,7 @@ public class MDXQProcessor {
 
         List<List<String>> finalMDXQueries = new ArrayList<>();
         HashMap<Integer,TreeNode> keyValPairsForDimension = _getKeyValuePairOfSelectedDimensionsFromTree(selectedDimension);
-        requestedQueries = GenerateQueryString(allAxisDetails, selectedMeasures, measureMap, keyValPairsForDimension, false);
+        requestedQueries = GenerateQueryString(allAxisDetails, selectedMeasures, measureMap, keyValPairsForDimension, false,false);
         finalMDXQueries.add(requestedQueries);
         Cube c =  new Cube(QueryProcessor.olapServiceURL);
         //only for testing:
@@ -173,12 +184,28 @@ public class MDXQProcessor {
 
     }
     public List<String> GenerateQueryString(List<List<List<Integer>>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
-                                             HashMap<Integer,TreeNode> keyValPairsForDimension, boolean isAddDescendant ){
+                                             HashMap<Integer,TreeNode> keyValPairsForDimension, boolean isAddDescendant,boolean isAddInflatedSiblings ){
         int nQueryCount =queryDetails.size();
         List<String> subQueries =  new ArrayList<>();
         for(int i=0;i<nQueryCount;i++)
         {
-            subQueries.add(this._generateSubQueryString(queryDetails.get(i), selectedMeasures, measureMap, keyValPairsForDimension, isAddDescendant));
+            String querystring = this._generateSubQueryString(queryDetails.get(i), selectedMeasures, measureMap, keyValPairsForDimension, isAddDescendant);
+            if(isAddDescendant) {
+                // if exact same query is already done before
+                if(!isAddInflatedSiblings) {
+                    if (!CacheProcess.inflatedQueries.contains(querystring) && !CacheProcessUpto1Level.inflatedQueries.contains(querystring))
+                        CacheProcess.inflatedQueries.add(querystring);
+                }
+                else{
+                    if (!CacheProcessUpto1Level.inflatedQueries.contains(querystring)&& !CacheProcess.inflatedQueries.contains(querystring))
+                        CacheProcessUpto1Level.inflatedQueries.add(querystring);
+                }
+
+            }
+            else
+            {
+                subQueries.add(querystring);
+            }
         }
        // subQueries.add("select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Employee].[Employees].[All Employees]},5,LEAVES) on axis(1) ,DESCENDANTS({[Geography].[Geography].[All Geographies]},4,LEAVES) on axis(2) from [Adventure Works]");
         return subQueries;
@@ -209,7 +236,10 @@ public class MDXQProcessor {
                 }
                 String dimensionName = node.getHierarchyName();
                 dimensionName =  dimensionName.substring(dimensionName.indexOf(".")+1);// removing [Dimension] part from the string : else it will not execute
-                dimensionList.add(dimensionName+".children");
+                if(isAddDescendant)
+                    dimensionList.add(dimensionName+".children");
+                else
+                    dimensionList.add(dimensionName);
 
             }
             if(isAddDescendant){
@@ -239,7 +269,7 @@ public class MDXQProcessor {
     }
     private HashMap<Integer,TreeNode> _getKeyValuePairOfSelectedDimensionsFromTree(HashMap<Integer,List<TreeNode>>dimensionTree)
     {
-        HashMap<Integer,TreeNode>keyValPairs =  new HashMap<Integer, TreeNode>();
+        HashMap<Integer,TreeNode>keyValPairs =  new HashMap<>();
         for(int i=0;i<dimensionTree.size();i++)
         {
             List<TreeNode>chidren = dimensionTree.get(i);

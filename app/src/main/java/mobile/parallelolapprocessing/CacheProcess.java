@@ -35,6 +35,7 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
     public List<List<String>>cellOrdinalCombinations;
     public String olapServerURL;
     private Thread inflatedDataDnldThread;
+    public static List<String> inflatedQueries;
     private long start=0;
     List<List<TreeNode>> parentEntiresPerAxis;
     public CacheProcess(List<List<List<Integer>>> allAxisDetails, List<Integer> selectedMeasures, HashMap<Integer, String> measureMap,
@@ -47,8 +48,13 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
         this.cellOrdinalCombinations = cellOrdinalCombinations;
         this.olapServerURL = olapURL;
     }
-
-    private List<List<List<Integer>>> _generateNewAxisDetails(List<HashMap<Integer, TreeNode>> allLeaves, List<List<List<Integer>>> allAxisDetails) {
+    public CacheProcess(){
+        if(CacheProcess.inflatedQueries == null)
+        {
+            CacheProcess.inflatedQueries = new ArrayList<>();
+        }
+    }
+    public List<List<List<Integer>>> generateNewAxisDetails(List<HashMap<Integer, TreeNode>> allLeaves, List<List<List<Integer>>> allAxisDetails) {
         List<List<List<Integer>>> newAxisDetails= new ArrayList<>();
         List<List<Integer>> newAxis= new ArrayList<>();
         int hashIndex=0;
@@ -68,7 +74,7 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
         return newAxisDetails;
     }
 
-    private List<HashMap<Integer,TreeNode>> _getLeavesPerAxis(HashMap<Integer, TreeNode> keyValPairsForDimension,
+    public List<HashMap<Integer,TreeNode>> getLeavesPerAxis(HashMap<Integer, TreeNode> keyValPairsForDimension,
                                                        List<List<Integer>> allAxisDetails) {
         List<HashMap<Integer, TreeNode>> Leaves = new ArrayList<>();
         this.parentEntiresPerAxis =  new ArrayList<>();
@@ -88,7 +94,7 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
                     }
                     // old approach
                     //parents.add(child);
-                    HashMap<Integer,TreeNode> allLeaves = _getLeaves(child, new HashMap<Integer, TreeNode>());
+                    HashMap<Integer,TreeNode> allLeaves = getLeaves(child, new HashMap<Integer, TreeNode>());
                     Leaves.add(allLeaves);
                 }
             }
@@ -96,73 +102,42 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
         }
         return Leaves;
     }
-    private  HashMap<Integer,TreeNode> _getLeaves(TreeNode parent,HashMap<Integer,TreeNode> oldLeaves){
-       // return _iterateTreeToGenerateLeaves(parent,oldLeaves);
+    public  HashMap<Integer,TreeNode> getLeaves(TreeNode parent,HashMap<Integer,TreeNode> oldLeaves){
+
         return new CacheProcessUpto1Level().iterateTreeToGenerateChildren(parent);
 
     }
 
-    private HashMap<Integer,TreeNode> _iterateTreeToGenerateLeaves(TreeNode parent, HashMap<Integer,TreeNode> oldLeaves) {
-        HashMap<Integer,TreeNode> allLeaves=oldLeaves;
-        List<TreeNode>children = parent.getChildren();
-        if (children.size() == 0) {
-            allLeaves.put(parent.getNodeCounter(),parent);
 
-        } else {
-            for (int i = 0; i < children.size(); i++) {
-                TreeNode child = children.get(i);
-                if(child!=null) {
-                    _iterateTreeToGenerateLeaves(child,allLeaves);
-                }
-            }
-        }
-        return allLeaves;
-    }
-     //@Override
-    public void run() {
-         try {
-             start = System.currentTimeMillis();
-             if (!Log.isLoggable("MDXQueryDownload", Log.VERBOSE))
-                 Log.v("MyApplicationTag", "Inflated StartMDXQueryDownload started:");
-             Cube c = new Cube(olapServerURL);
-             MDXQProcessor mdxQ = new MDXQProcessor();
-             List<HashMap<Integer, TreeNode>> allLeaves = _getLeavesPerAxis(keyValPairsForDimension, allAxisDetails.get(0));
-             List<List<List<Integer>>> newAxisDetails = _generateNewAxisDetails(allLeaves, allAxisDetails);
-             List<List<String>> cellOrdinalCombinations = new ArrayList<>();
-             int queryCount = allAxisDetails.size();
-             for (int i = 0; i < queryCount; i++) {
-                 cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
-             }
-
-             List<String> inflatedQueries = mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
-                     keyValPairsForDimension, true);
-             List<List<Long>> cubeInflated = c.GetCubeData(inflatedQueries.get(0));
-             long endTime = System.currentTimeMillis() - start;
-             if (!Log.isLoggable("MDXQueryDownload", Log.VERBOSE))
-                 Log.v("MyApplicationTag", "Inflated query down load time from server: " + endTime);
-
-             //mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), cubeInflated);// assuming only 1 query entry
-             mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated);// assuming only 1 query entry
-         }
-         catch(Exception e) {
-             String ex = e.getMessage();
-         }
-    }
-    public void start ()
-    {
-        if (inflatedDataDnldThread == null)
-        {
-            //inflatedDataDnldThread = new Thread (this);
-            inflatedDataDnldThread.start ();
+    private void run() {
+        try {
             start = System.currentTimeMillis();
 
+            Cube c = new Cube(olapServerURL);
+            MDXQProcessor mdxQ = new MDXQProcessor();
+            List<HashMap<Integer, TreeNode>> allLeaves = getLeavesPerAxis(keyValPairsForDimension, allAxisDetails.get(0));
+            List<List<List<Integer>>> newAxisDetails = generateNewAxisDetails(allLeaves, allAxisDetails);
+            List<List<String>> cellOrdinalCombinations = new ArrayList<>();
+            int queryCount = allAxisDetails.size();
+            for (int i = 0; i < queryCount; i++) {
+                cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
+            }
+
+            mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
+                    keyValPairsForDimension, true,false);
+            List<List<Long>> cubeInflated = c.GetCubeData(inflatedQueries.get(0));
+
+            mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated);// assuming only 1 query entry
+        }
+        catch(Exception e) {
+            String ex = e.getMessage();
         }
     }
-
 
     @Override
     protected String doInBackground(Void... params) {
         this.run();
+
         return "Success";
     }
 }

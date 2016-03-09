@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,11 +33,13 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 import Processor.QueryProcessor;
+import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
 import mobile.parallelolapprocessing.Async.Call.DimensionHierarchy;
 import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
 import mobile.parallelolapprocessing.Async.Call.RootDimension;
@@ -99,16 +102,20 @@ public class DimensionTree extends Fragment{
         final Button backBtn = (Button)rootView.findViewById(R.id.backButton);
         final ListView selectedQuery = (ListView)rootView.findViewById(R.id.queryView);
         final TextView finalSelection =(TextView)rootView.findViewById(R.id.finalSelections);
+        final EditText axis = (EditText) rootView.findViewById(R.id.editTextAxis);
+        final EditText dimesionPerAxis =(EditText) rootView.findViewById(R.id.editTextDimension);
         execBtn.setVisibility(View.INVISIBLE);
         selectedQuery.setVisibility(View.INVISIBLE);
         finalSelection.setVisibility(View.INVISIBLE);
         backBtn.setVisibility(View.INVISIBLE);
+        //axis.setVisibility(View.INVISIBLE);
+        //dimesionPerAxis.setVisibility(View.INVISIBLE);
         try {
 
             View.OnClickListener buttonListener = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    _captureUserSelectionForDimensionMeasures(containerView, measureContainer, execBtn, backBtn, selectedQuery, finalSelection);
+                    _captureUserSelectionForDimensionMeasures(containerView, measureContainer, execBtn, backBtn, selectedQuery, finalSelection,axis,dimesionPerAxis);
 
                 }
 
@@ -125,8 +132,10 @@ public class DimensionTree extends Fragment{
             {
                 @Override
                 public void onClick(View v) {
+                    String totalAxis = axis.getText().toString();
+                    String totalDimensionPerAxis = dimesionPerAxis.getText().toString();
                     // process MXD query here
-                    _processUserMDXquerySelection(selectedQuery);
+                    _processUserMDXquerySelection(selectedQuery,totalAxis,totalDimensionPerAxis);
 
                 }
 
@@ -152,8 +161,9 @@ public class DimensionTree extends Fragment{
         return rootView;
     }
 
-    private void _captureUserSelectionForDimensionMeasures(ViewGroup containerView, ViewGroup measureContainer, Button execBtn, Button backBtn, ListView selectedQuery, TextView finalSelection) {
-        _setVisibilitySettings(containerView, measureContainer, execBtn, backBtn, selectedQuery, finalSelection);
+    private void _captureUserSelectionForDimensionMeasures(ViewGroup containerView, ViewGroup measureContainer, Button execBtn, Button backBtn, ListView selectedQuery, TextView finalSelection, EditText axis,EditText dimesionPerAxis) {
+
+        _setVisibilitySettings(containerView, measureContainer, execBtn, backBtn, selectedQuery, finalSelection, axis,dimesionPerAxis);
         final LinkedHashMap<String, String> listItems = new LinkedHashMap<>();
 
         listItems.put("First","Selected Dimensions are given below:");
@@ -183,13 +193,19 @@ public class DimensionTree extends Fragment{
         finalSelection.setVisibility(View.INVISIBLE);
     }
 
-    private void _processUserMDXquerySelection(ListView selectedQuery) {
+    private void _processUserMDXquerySelection(ListView selectedQuery, String totalAxis, String totaldimensionPerAxis) {
         int measure_pos = queryList.lastIndexOf("Selected Measures are given below:");
         List<String> measures = new ArrayList<>(queryList.subList(measure_pos+1,queryList.size()));
         int dimen_pos = queryList.lastIndexOf("Selected Dimensions are given below:");
         List<String> dimensions = new ArrayList<>(queryList.subList(dimen_pos+1,measure_pos));
          // so far hard coded
-        int [] entryPerDimension ={2,2} ;
+
+        String[] result = totaldimensionPerAxis.split(",");
+        int [] entryPerDimension =new int[result.length] ;
+        int i=0;
+        for (String str : result)
+            entryPerDimension[i++] = Integer.parseInt(str);
+
         DataRetrieval.Measures measuresObj = new DataRetrieval.Measures(QueryProcessor.olapServiceURL);//pass url
         MDXUserQueryInput mdxInputObj = new MDXUserQueryInput(entryPerDimension, MainActivity.DimensionTreeNode,dimensions,
                 measuresObj,MainActivity.MeasuresList,measures) ;
@@ -199,13 +215,17 @@ public class DimensionTree extends Fragment{
         //MDXObj.compareWithPreviousQueryDimensions(entryPerDimension,dimensions);
         long startTimer = System.currentTimeMillis();
         try {
-            MDXObj.start();//.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,mdxInputObj);
+            MDXObj.start();
+            //MDXObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
              while (!MDXUserQuery.isComplete) {
-                Thread.sleep(100);
+                Thread.sleep(1);
             }
             long endTimer = System.currentTimeMillis();
+
+
             _populateListView(selectedQuery, endTimer - startTimer);
-            // start downloading inflated query
+            // start asynchronous thread
+            _startAsyncThreads();
 
         }
         catch (Exception e){
@@ -213,7 +233,26 @@ public class DimensionTree extends Fragment{
         }
     }
 
+    private void _startAsyncThreads(){
+        try {
+            // start parallel thread to fetch inflated data for leaf levels
+            CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
 
+            cache.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+            // start another thread to fetch siblings data
+            CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+
+            cacheParentLevelObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+        }
+        catch(Exception e)
+        {
+            String s = e.getMessage();
+        }
+    }
 
 
     private void _populateListView(ListView selectedQuery, long timeTaken) {
@@ -230,9 +269,13 @@ public class DimensionTree extends Fragment{
             selectedQuery.setAdapter(a);
 
         }
+        // flush previous query by user:
+        MDXUserQuery.isComplete =  false;
+        QueryProcessor.resultSet = new HashMap<>();
+
     }
 
-    private void _setVisibilitySettings(ViewGroup containerView, ViewGroup measureContainer, Button execBtn,Button backBtn, ListView selectedQuery, TextView finalSelection) {
+    private void _setVisibilitySettings(ViewGroup containerView, ViewGroup measureContainer, Button execBtn,Button backBtn, ListView selectedQuery, TextView finalSelection,EditText axis, EditText dimensionPerAxis) {
         containerView.setVisibility(View.INVISIBLE);
         measureContainer.setVisibility(View.INVISIBLE);
         dimNode.setVisibility(View.INVISIBLE);
@@ -241,6 +284,8 @@ public class DimensionTree extends Fragment{
         backBtn.setVisibility(View.VISIBLE);
         selectedQuery.setVisibility(View.VISIBLE);
         finalSelection.setVisibility(View.VISIBLE);
+        axis.setVisibility(View.VISIBLE);
+        dimensionPerAxis.setVisibility(View.VISIBLE);
     }
 
     private void _setAdapterOnClickListener(final LinkedHashMap<String, String> listItems, List<String> list, final ListView selectedQuery) {

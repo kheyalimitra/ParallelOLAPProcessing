@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import DataStructure.TreeNode;
 import Processor.QueryProcessor;
+import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
 import mobile.parallelolapprocessing.Async.ParameterWrapper.MDXUserQueryInput;
 import mobile.parallelolapprocessing.CacheProcess;
 import mobile.parallelolapprocessing.MainActivity;
@@ -17,7 +18,7 @@ import mobile.parallelolapprocessing.MainActivity;
 /**
  * Created by KheyaliMitra on 2/1/2016.
  */
-public class MDXUserQuery implements Runnable {//extends AsyncTask<MDXUserQueryInput,Void, Boolean> {
+public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryInput,Void, Boolean> {//implements Runnable
     public static List<List<List<Integer>>> allAxisDetails;
     public static List<Integer> selectedMeasures;
     public static HashMap<Integer, String> measureMap;
@@ -33,13 +34,8 @@ public class MDXUserQuery implements Runnable {//extends AsyncTask<MDXUserQueryI
        this.MDXQObj = obj;
    }
 
-    @Override
+   @Override
     public void run() {
-        start = System.currentTimeMillis();
-
-        if (!Log.isLoggable("MDXQueryDownload", Log.VERBOSE))
-            Log.v("MyApplicationTag", "StartMDXQueryDownload started. Time: ");
-
         QueryProcessor qp = new QueryProcessor();
         try {
             //Standard priority of the most important display threads, for compositing the screen and retrieving input events.
@@ -48,33 +44,28 @@ public class MDXUserQuery implements Runnable {//extends AsyncTask<MDXUserQueryI
                     MDXQObj.measureMap,MDXQObj.measureInput);
             isComplete = true;
 
-
-            // ... do some work C ...
-
         } catch (Exception e) {
             e.printStackTrace();
             isComplete = false;
 
         }
+
     }
+
     public void start ()
     {
         if (inflatedDataDnldThread == null)
         {
-            inflatedDataDnldThread = new Thread (this);
+            inflatedDataDnldThread =new Thread (this);
             inflatedDataDnldThread.start ();
             start = System.currentTimeMillis();
-            try {
-                CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
-                        MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
-                //cache.start();
-                //cache.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            }
-            catch(Exception e)
-            {
 
-            }
         }
     }
 
+   // @Override
+    protected Boolean doInBackground(MDXUserQueryInput... params) {
+        this.run();
+        return true;
+    }
 }

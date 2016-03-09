@@ -35,6 +35,7 @@ public class QueryProcessor {
 
 	public boolean GetUserRequestedQueryData(int[] entryPerDimension, TreeNode rootDimensionTree,List<String>hardcodedInputDim,Measures measuresObj,HashMap<Integer,String>measureMap,
 											 List<String> hardcodedInputMeasures) throws Exception {
+		long start = System.currentTimeMillis();
 		DataCubeAxis dca = new DataCubeAxis();
 		try {
 			HashMap<Integer, List<TreeNode>> selectedDimension = dca.GetTreeNodeListForEachAxis(rootDimensionTree, hardcodedInputDim, entryPerDimension);
@@ -46,12 +47,12 @@ public class QueryProcessor {
 			//to store original dimension selection  before sort and merge : this will be used after data is fetched
 			//to check if any entries are found in Cache
 			List<String> originalAtomicKeys = new ArrayList<>(generatedKeys);
-
+			HashMap<Integer, String> selectedMeasures = measuresObj.GetHashKeyforSelecteditems(hardcodedInputMeasures, measureMap);
 			//check from cache
-			List<String> nonCachedKeys = mdxQueryProcessorObj.checkCachedKeysToRemoveDuplicateEntries(generatedKeys);
+			List<String> nonCachedKeys = mdxQueryProcessorObj.checkCachedKeysToRemoveDuplicateEntries(generatedKeys, selectedMeasures.keySet());
 
 			if (nonCachedKeys.size() > 0) {
-				HashMap<Integer, String> selectedMeasures = measuresObj.GetHashKeyforSelecteditems(hardcodedInputMeasures, measureMap);
+
 				List<Integer> selectedMesureKeyList = measuresObj.GetSelectedKeyList(hardcodedInputMeasures, measureMap);
 				// flush entries from previous queries
 				resultSet =  new HashMap<>();
@@ -61,10 +62,17 @@ public class QueryProcessor {
 				{
 					resultSet = _getQueryResultFromCache(originalAtomicKeys,resultSet);
 				}
+				long end = System.currentTimeMillis() -start;
 			} else {
 				// 100% hit
 				// use original Atomic keys to fetch records from cache and display to user
 					if(resultSet.size()==originalAtomicKeys.size()){
+						long end = System.currentTimeMillis() -start;
+						return true;
+					}
+				else{
+						resultSet = _getQueryResultFromCache(originalAtomicKeys,resultSet);
+						long end = System.currentTimeMillis() -start;
 						return true;
 					}
 			}
