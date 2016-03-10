@@ -58,7 +58,7 @@ public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryIn
         {
             inflatedDataDnldThread =new Thread (this);
             inflatedDataDnldThread.start ();
-            start = System.currentTimeMillis();
+
 
         }
     }

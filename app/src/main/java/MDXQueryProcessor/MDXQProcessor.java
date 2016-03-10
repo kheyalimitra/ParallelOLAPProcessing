@@ -189,7 +189,7 @@ public class MDXQProcessor {
         List<String> subQueries =  new ArrayList<>();
         for(int i=0;i<nQueryCount;i++)
         {
-            String querystring = this._generateSubQueryString(queryDetails.get(i), selectedMeasures, measureMap, keyValPairsForDimension, isAddDescendant);
+            String querystring = this._generateSubQueryString(queryDetails.get(i), selectedMeasures, measureMap, keyValPairsForDimension, isAddDescendant,isAddInflatedSiblings);
             if(isAddDescendant) {
                 // if exact same query is already done before
                 if(!isAddInflatedSiblings) {
@@ -212,7 +212,7 @@ public class MDXQProcessor {
     }
 
     private String _generateSubQueryString(List<List<Integer>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
-                                                   HashMap<Integer,TreeNode> keyValPairsForDimension, boolean isAddDescendant ){
+                                                   HashMap<Integer,TreeNode> keyValPairsForDimension, boolean isAddDescendant,boolean isFindSibmlings ){
 
         String sqlMeasureStatement = this._generateQueryForMeasures(selectedMeasures, measureMap);
         int axisCount =queryDetails.size();
@@ -230,17 +230,19 @@ public class MDXQProcessor {
                 node= keyValPairsForDimension.get(dimensionkeyList.get(j));
                 if(isAddDescendant) {
                     // this one is for all dimensions which are currently pointed as leaf node, if that is so, go 1 level up and fetch records for all leaves of same parents
-                    if (node.getChildren().size() == 0) {
+                    if((node.getChildren().size() == 0)|| (isFindSibmlings)) {
                         node = node.getParent();
                     }
+
                 }
                 String dimensionName = node.getHierarchyName();
                 dimensionName =  dimensionName.substring(dimensionName.indexOf(".")+1);// removing [Dimension] part from the string : else it will not execute
-                if(isAddDescendant)
-                    dimensionList.add(dimensionName+".children");
-                else
-                    dimensionList.add(dimensionName);
 
+                 if (isAddDescendant)
+                    dimensionName += ".children";
+                 //if(!dimensionList.contains(dimensionName)) {
+                    dimensionList.add(dimensionName);
+               // }
             }
             if(isAddDescendant){
                 TreeNode parentNode = node.getParent();// whose parent???

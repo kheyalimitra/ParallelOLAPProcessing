@@ -43,6 +43,10 @@ public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> {
         {
             CacheProcessUpto1Level.inflatedQueries = new ArrayList<>();
         }
+        if(CacheProcess.inflatedQueries == null)
+        {
+            CacheProcess.inflatedQueries = new ArrayList<>();
+        }
     }
 
     public HashMap<Integer,TreeNode> iterateTreeToGenerateChildren(TreeNode parent) {
@@ -64,7 +68,7 @@ public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> {
             Cube c = new Cube(olapServerURL);
             MDXQProcessor mdxQ = new MDXQProcessor();
             CacheProcess cpObj = new CacheProcess();
-            List<HashMap<Integer, TreeNode>> allLeaves = _getSiblingsPerAxis(keyValPairsForDimension, allAxisDetails.get(0));
+            List<List<HashMap<Integer, TreeNode>>> allLeaves = _getSiblingsPerAxis(keyValPairsForDimension, allAxisDetails.get(0));
             if(allLeaves.size()>0) {
                 List<List<List<Integer>>> newAxisDetails = cpObj.generateNewAxisDetails(allLeaves, allAxisDetails);
                 List<List<String>> cellOrdinalCombinations = new ArrayList<>();
@@ -74,39 +78,48 @@ public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> {
                 }
 
                 mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
-                        keyValPairsForDimension, true,true);
-                List<List<Long>> cubeInflated = c.GetCubeData(inflatedQueries.get(0));
-                mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated);// assuming only 1 query entry
+                        keyValPairsForDimension, true, true);
+                if(CacheProcessUpto1Level.inflatedQueries!=null && CacheProcessUpto1Level.inflatedQueries.size()>0) {
+                    List<List<Long>> cubeInflated = c.GetCubeData(CacheProcessUpto1Level.inflatedQueries.get(CacheProcessUpto1Level.inflatedQueries.size()-1));// since last entry is the current one
+                    mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated);// assuming only 1 query entry
+                }
             }
         }
         catch(Exception e) {
             String ex = e.getMessage();
         }
     }
-    private List<HashMap<Integer,TreeNode>> _getSiblingsPerAxis(HashMap<Integer, TreeNode> keyValPairsForDimension,
+    private List<List<HashMap<Integer,TreeNode>>> _getSiblingsPerAxis(HashMap<Integer, TreeNode> keyValPairsForDimension,
                                                                List<List<Integer>> allAxisDetails) {
-        List<HashMap<Integer, TreeNode>> Leaves = new ArrayList<>();
+        List<List<HashMap<Integer, TreeNode>>> Leaves = new ArrayList<>();
         boolean isRootNode = false;
         for (int i = 1; i < allAxisDetails.size(); i++)// 0 th entry is for measures
         {
+            List<HashMap<Integer, TreeNode>> axisWiseList = new ArrayList<>();
             for (int j = 0; j < allAxisDetails.get(i).size(); j++) {
+                int key = allAxisDetails.get(i).get(j);
 
-                TreeNode node = keyValPairsForDimension.get(allAxisDetails.get(i).get(j));
-                if (node != null) {
-                    node = node.getParent();
-                    if(node.getReference().toString()!="Dimensions") {
-                        //if this is in root level, we do not need to add that
-                        HashMap<Integer, TreeNode> allLeaves = new CacheProcess().getLeaves(node, new HashMap<Integer, TreeNode>());
-                        Leaves.add(allLeaves);
-                    }
-                    else {
+                    TreeNode node = keyValPairsForDimension.get(key);
+                    if (node != null) {
+                        node = node.getParent();
+                        int nodeNo = node.getNodeCounter();
+                        // if same parent has already processed... we do not need that (avoiding 198#198#202#202 case -> 198#202 is right)
+
+                       // if (!uniqueDimensions.contains(nodeNo)) {
+                         //   uniqueDimensions.add(nodeNo);
+                            if (node.getReference().toString() != "Dimensions") {
+                                //if this is in root level, we do not need to add that
+                                HashMap<Integer, TreeNode> allLeaves = iterateTreeToGenerateChildren(node);
+                                axisWiseList.add(allLeaves);
+                            }
+                        //}
+                    } else {
                         isRootNode = true;
                         break;
                     }
-                }
-
             }
-            if(isRootNode)
+            Leaves.add(axisWiseList);
+            if (isRootNode)
                 break;
         }
         //if this is in root level, we do not need to add that : simply return blank list
@@ -115,6 +128,8 @@ public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> {
         }
         return Leaves;
     }
+
+
     @Override
     protected String doInBackground(Void... params) {
         this.run();

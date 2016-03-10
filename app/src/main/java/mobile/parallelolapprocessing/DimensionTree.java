@@ -58,7 +58,8 @@ public class DimensionTree extends Fragment{
     public static DataStructure.TreeNode HierarchyNode;
     private ArrayList<String> SelectedDimensions;
     private ArrayList<String> SelectedMeasures;
-
+    public static long startTimer=0;
+    public static long endTimer =0;
     private class SimpleArrayAdapter extends ArrayAdapter<String> {
         public SimpleArrayAdapter(Context context, List<String> objects) {
             super(context, android.R.layout.simple_list_item_1, objects);
@@ -213,17 +214,18 @@ public class DimensionTree extends Fragment{
         MDXUserQuery MDXObj = new MDXUserQuery(mdxInputObj);
         // decide if caching is needed or not.
         //MDXObj.compareWithPreviousQueryDimensions(entryPerDimension,dimensions);
-        long startTimer = System.currentTimeMillis();
+        this.startTimer =0;
+        this.endTimer =0;
         try {
             MDXObj.start();
             //MDXObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
              while (!MDXUserQuery.isComplete) {
                 Thread.sleep(1);
             }
-            long endTimer = System.currentTimeMillis();
+            this.endTimer = System.currentTimeMillis();
 
 
-            _populateListView(selectedQuery, endTimer - startTimer);
+            _populateListView(selectedQuery, this.endTimer - this.startTimer);
             // start asynchronous thread
             _startAsyncThreads();
 
@@ -272,6 +274,8 @@ public class DimensionTree extends Fragment{
         // flush previous query by user:
         MDXUserQuery.isComplete =  false;
         QueryProcessor.resultSet = new HashMap<>();
+        this.startTimer =0;
+        this.endTimer =0;
 
     }
 
