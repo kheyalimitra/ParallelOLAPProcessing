@@ -189,7 +189,7 @@ public class MDXQProcessor {
         List<String> subQueries =  new ArrayList<>();
         for(int i=0;i<nQueryCount;i++)
         {
-            String querystring = this._generateSubQueryString(queryDetails.get(i), selectedMeasures, measureMap, keyValPairsForDimension, isAddDescendant,isAddInflatedSiblings);
+            String querystring = this._generateSubQueryString(queryDetails.get(i), selectedMeasures, measureMap, keyValPairsForDimension, isAddDescendant, isAddInflatedSiblings);
             if(isAddDescendant) {
                 // if exact same query is already done before
                 if(!isAddInflatedSiblings) {
@@ -212,7 +212,7 @@ public class MDXQProcessor {
     }
 
     private String _generateSubQueryString(List<List<Integer>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
-                                                   HashMap<Integer,TreeNode> keyValPairsForDimension, boolean isAddDescendant,boolean isFindSibmlings ){
+                                                   HashMap<Integer,TreeNode> keyValPairsForDimension, boolean isAddDescendant,boolean isFindSiblings ){
 
         String sqlMeasureStatement = this._generateQueryForMeasures(selectedMeasures, measureMap);
         int axisCount =queryDetails.size();
@@ -223,14 +223,15 @@ public class MDXQProcessor {
             List<Integer> dimensionkeyList = queryDetails.get(i);
             List<String> dimensionList =  new ArrayList<>();
             int dimensionCount = dimensionkeyList.size();
-            int distance=0;
+            List<String> originalDimensions = new ArrayList<>();
             TreeNode  node= keyValPairsForDimension.get(dimensionkeyList.get(0));
             for(int j=0;j<dimensionCount;j++)
             {
                 node= keyValPairsForDimension.get(dimensionkeyList.get(j));
                 if(isAddDescendant) {
                     // this one is for all dimensions which are currently pointed as leaf node, if that is so, go 1 level up and fetch records for all leaves of same parents
-                    if((node.getChildren().size() == 0)|| (isFindSibmlings)) {
+                    originalDimensions.add(node.getHierarchyName().substring(node.getHierarchyName().indexOf(".")+1));
+                    if((node.getChildren().size() == 0)|| (isFindSiblings)) {
                         node = node.getParent();
                     }
 
@@ -238,19 +239,25 @@ public class MDXQProcessor {
                 String dimensionName = node.getHierarchyName();
                 dimensionName =  dimensionName.substring(dimensionName.indexOf(".")+1);// removing [Dimension] part from the string : else it will not execute
 
-                 if (isAddDescendant)
-                    dimensionName += ".children";
+                 //if (isAddDescendant)
+                    //dimensionName += ".children";
                  //if(!dimensionList.contains(dimensionName)) {
-                    dimensionList.add(dimensionName);
+                 dimensionList.add(dimensionName);
                // }
             }
-            if(isAddDescendant){
-                TreeNode parentNode = node.getParent();// whose parent???
-                distance= parentNode.getLevel() - (node.getLevel() - 2);
-                axisWiseQuery.add("{" + TextUtils.join(",", dimensionList) + "} on axis(" + (i) + ") ");//+ distance +
 
-                // axisWiseQuery.add("DESCENDANTS({" + TextUtils.join(",", dimensionList) + "},"
-                  //       +",LEAVES) on axis(" + (i) + ") ");//+ distance +
+            if(isAddDescendant && !isFindSiblings){
+                // adding original combinations along with its leaves so that it has both  Education X2005 and EducationX2005.H2 EducationX2005.H3
+                for(int j=0;j<originalDimensions.size();j++){
+                    dimensionList.add(originalDimensions.get(j));
+                }
+                //TreeNode parentNode = node.getParent();// whose parent???
+                //distance= parentNode.getLevel() - (node.getLevel() - 2);
+                //axisWiseQuery.add("{" + TextUtils.join(",", dimensionList) + "} on axis(" + (i) + ") ");//+ distance +
+
+                axisWiseQuery.add("DESCENDANTS({" + TextUtils.join(",", dimensionList) + "},"
+                        +"1,) on axis(" + (i) + ") ");//+ distance +
+                        // +",LEAVES) on axis(" + (i) + ") ");//+ distance +
 
             }
             else {
@@ -450,56 +457,21 @@ public class MDXQProcessor {
         result = newResult;
         return  _generateKeyCombinations(axisIndex+1,keys,result);
     }
-    public HashMap<String,Long> CheckAndPopulateCache1(List<String>combinations,  List<List<Long>> downloadedCube) {
-        HashMap<String,Long> resultSet =  new HashMap<>();
-        int cellMeasuresCount = downloadedCube.size();
-        try {
-            for (int i = 0; i < cellMeasuresCount; i++) {
-                long cellOrdinal = downloadedCube.get(i).get(1);//1 cell ordinal value : 0 result
-                String combination = combinations.get((int) cellOrdinal);// cell ordinal :[cellMeasure, cellOrdinal]
-                if (combination != null) {
-                    String dimensionCombination = this._sortKeyCombination(combination.substring(combination.indexOf("#") + 1));
-                    String measure = combination.substring(0, combination.indexOf("#"));
-
-                    HashMap<Long, Long> keyVal = new HashMap<>();
-                    //update existing cache
-                    String[] measureList = measure.replace("[", "").replace("]", "").split(",");
-                    if (MainActivity.CachedDataCubes.containsKey(dimensionCombination)){//MainActivity.CachedDataCubes.containsKey(dimensionCombination)) {
-                        // measure list per axis
-                        for (int j = 0; j < measureList.length; j++) {
-                            //MainActivity.CachedDataCubes.get(dimensionCombination).put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
-                           MainActivity.CachedDataCubes.get(dimensionCombination).put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
-                        }
-                    } else {
-                        // measure list per axis
-                        for (int j = 0; j < measureList.length; j++) {
-                            keyVal.put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
-
-                        }
-                        MainActivity.CachedDataCubes.put(dimensionCombination,keyVal);
-                    }
-                    resultSet.put(dimensionCombination,downloadedCube.get(i).get(0));
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            return null;
-        }
-        return  resultSet;
-    }
-
     public HashMap<String,Long> CheckAndPopulateCache(List<String> combinations, List<List<TreeNode>> parentEntiresPerAxis, List<List<Long>> downloadedCube) {
         HashMap<String,Long> resultSet =  new HashMap<>();
         HashMap<String,Long> totalSum=new HashMap<>();
+        // no possible result
+        long dummy=0;
         int cellMeasuresCount = downloadedCube.size();
         try {
-            //long sum=0;
+
             for (int i = 0; i < cellMeasuresCount; i++) {
 
                 long cellOrdinal = downloadedCube.get(i).get(1);//1 cell ordinal value : 0 result
                 String combination = combinations.get((int) cellOrdinal);// cell ordinal :[cellMeasure, cellOrdinal]
                 if (combination != null) {
+                    // remove from the combination list. this will help to check if evry combination get covered  in next section
+                    combinations.remove((int)cellOrdinal);
                     String dimensionCombination = this._sortKeyCombination(combination.substring(combination.indexOf("#") + 1));
                     String measure = combination.substring(0, combination.indexOf("#"));
 
@@ -507,40 +479,25 @@ public class MDXQProcessor {
 
                     //update existing cache
                     String[] measureList = measure.replace("[", "").replace("]", "").split(",");
-                    if (MainActivity.CachedDataCubes.containsKey(dimensionCombination)){//MainActivity.CachedDataCubes.containsKey(dimensionCombination)) {
-                        // measure list per axis
-                        for (int j = 0; j < measureList.length; j++) {
-                            // for roll up operation: summing all leaf node values for its parent
-                            if(totalSum.containsKey(measureList[j])){
-                                long sum = totalSum.get(measureList[j]);
-                                sum += downloadedCube.get(i).get(0);
-                                totalSum.put(measureList[j], sum);
-                            }
-                            else{
-                                totalSum.put(measureList[j], downloadedCube.get(i).get(0));
-                            }
-                            MainActivity.CachedDataCubes.get(dimensionCombination).put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
-                        }
-                    } else {
-                        // measure list per axis
-                        for (int j = 0; j < measureList.length; j++) {
-                            // for roll up operation: summing all leaf node values for its parent
-                            if(totalSum.containsKey(measureList[j])){
-                                long sum = totalSum.get(measureList[j]);
-                                sum += downloadedCube.get(i).get(0);
-                                totalSum.put(measureList[j], sum);
-                            }
-                            else{
-                                totalSum.put(measureList[j], downloadedCube.get(i).get(0));
-                            }
-                            keyVal.put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
-
-                        }
-                        MainActivity.CachedDataCubes.put(dimensionCombination,keyVal);
-                    }
+                    _updateMainCache(downloadedCube, totalSum, i, dimensionCombination, keyVal, measureList);
                     resultSet.put(dimensionCombination,downloadedCube.get(i).get(0));
                 }
 
+            }
+            if( combinations.size()>0){
+
+                for( int i=0;i<combinations.size();i++){
+                    String dimensionCombination = this._sortKeyCombination(combinations.get(i).substring(combinations.get(i).indexOf("#") + 1));
+                    String measure = combinations.get(i).substring(0, combinations.get(i).indexOf("#"));
+
+                    HashMap<Long, Long> keyVal = new HashMap<>();
+
+                    //update existing cache
+                    String[] measureList = measure.replace("[", "").replace("]", "").split(",");
+
+                    _updateMainCache(null, totalSum, i, dimensionCombination, keyVal, measureList);
+                    //resultSet.put(dimensionCombination, dummy);
+                }
             }
            /* if(parentEntiresPerAxis !=null && parentEntiresPerAxis.size()>0) {
                 _addEntryforInflatedParentNodes(totalSum, parentEntiresPerAxis);
@@ -552,6 +509,56 @@ public class MDXQProcessor {
         }
         return  resultSet;
 
+    }
+
+    private void _updateMainCache(List<List<Long>> downloadedCube, HashMap<String, Long> totalSum, int i, String dimensionCombination, HashMap<Long, Long> keyVal, String[] measureList) {
+        long dummy = 0;
+        if (MainActivity.CachedDataCubes.containsKey(dimensionCombination)){//MainActivity.CachedDataCubes.containsKey(dimensionCombination)) {
+            // measure list per axis
+            for (int j = 0; j < measureList.length; j++) {
+                // for roll up operation: summing all leaf node values for its parent
+                if(totalSum.containsKey(measureList[j])){
+                    long sum = totalSum.get(measureList[j]);
+                    if(downloadedCube!=null) {
+                        sum += downloadedCube.get(i).get(0);
+                        totalSum.put(measureList[j], sum);
+                    }
+                }
+                else{
+                    if(downloadedCube!=null) {
+                        totalSum.put(measureList[j], downloadedCube.get(i).get(0));
+                    }
+                }
+                if(downloadedCube!=null) {
+                    MainActivity.CachedDataCubes.get(dimensionCombination).put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
+                }
+
+            }
+        } else {
+            // measure list per axis
+            for (int j = 0; j < measureList.length; j++) {
+                // for roll up operation: summing all leaf node values for its parent
+                if(totalSum.containsKey(measureList[j])){
+                    long sum = totalSum.get(measureList[j]);
+                    if(downloadedCube!=null) {
+                        sum += downloadedCube.get(i).get(0);
+                        totalSum.put(measureList[j], sum);
+                    }
+                }
+                else{
+                    if(downloadedCube!=null)
+                     totalSum.put(measureList[j], downloadedCube.get(i).get(0));
+                }
+                if(downloadedCube!=null)
+                 keyVal.put(Long.parseLong(measureList[j].trim()), downloadedCube.get(i).get(0));
+                else {
+
+                    keyVal.put(Long.parseLong(measureList[j].trim()), dummy);
+                }
+
+            }
+            MainActivity.CachedDataCubes.put(dimensionCombination,keyVal);
+        }
     }
 
     private void _addEntryforInflatedParentNodes(HashMap<String,Long> totalSum, List<List<TreeNode>> parentEntiresPerAxis) {

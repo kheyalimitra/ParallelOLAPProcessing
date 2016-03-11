@@ -101,7 +101,25 @@ public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> {
 
                     TreeNode node = keyValPairsForDimension.get(key);
                     if (node != null) {
-                        node = node.getParent();
+                        /*// the following section deals with situations like: Education. All Customers.  We know that the server will send values for all under 'All custmers' sections
+                        // so if we go to its parent that is Education, its children will be 'All customers' which must be replaced by all those children under it.
+                        // Education.Children--> All customers but we need Bachelors, Hgh School  Graduates etc
+                        List<TreeNode> children = node.getChildren();
+                        if(children!=null && children.size()>0 && children.size()<=1)
+                        {
+                            String childName = children.get(0).getReference().toString();
+                            if(!childName.contains("All")){
+                                node = node.getParent();
+                            }
+                            else{
+                                node = children.get(0);
+
+                            }
+                        }
+                        else{*/
+                            node = node.getParent();
+                       // }
+
                         int nodeNo = node.getNodeCounter();
                         // if same parent has already processed... we do not need that (avoiding 198#198#202#202 case -> 198#202 is right)
 

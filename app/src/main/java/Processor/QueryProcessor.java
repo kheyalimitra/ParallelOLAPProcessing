@@ -10,7 +10,7 @@ import mobile.parallelolapprocessing.MainActivity;
 public class QueryProcessor {
 
 	public static final String olapServiceURL="http://webolap.cmpt.sfu.ca/ElaWebService/Service.asmx";//"http://192.168.0.207/OLAPService/AdventureWorks.asmx";
-	public static HashMap<String,Long> resultSet;
+	public static HashMap<String,Long> resultSet= new HashMap<>();
 	public void QueryProcessor() {
 	}
 
@@ -57,9 +57,10 @@ public class QueryProcessor {
 			if (nonCachedKeys.size() > 0) {
 
 				List<Integer> selectedMesureKeyList = measuresObj.GetSelectedKeyList(hardcodedInputMeasures, measureMap);
-				// flush entries from previous queries
-				resultSet =  new HashMap<>();
-				resultSet = mdxQueryProcessorObj.ProcessUserQuery(selectedMesureKeyList, selectedMeasures, selectedDimension, nonCachedKeys, false);
+                // get data from server
+				HashMap<String,Long> resultSetFromServer = mdxQueryProcessorObj.ProcessUserQuery(selectedMesureKeyList, selectedMeasures, selectedDimension, nonCachedKeys, false);
+				// add values from ser to exisitng result set ( in case there are partial hit from cache)
+				resultSet.putAll(resultSetFromServer);
 				// if there is a hit frm cache, take matched part from cache and add it to result set
 				if(originalAtomicKeys.size() != resultSet.size())
 				{

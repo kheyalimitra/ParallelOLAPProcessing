@@ -13,6 +13,7 @@ import Processor.QueryProcessor;
 import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
 import mobile.parallelolapprocessing.Async.ParameterWrapper.MDXUserQueryInput;
 import mobile.parallelolapprocessing.CacheProcess;
+import mobile.parallelolapprocessing.DimensionTree;
 import mobile.parallelolapprocessing.MainActivity;
 
 /**
@@ -40,6 +41,7 @@ public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryIn
         try {
             //Standard priority of the most important display threads, for compositing the screen and retrieving input events.
             //Process.setThreadPriority(Process.THREAD_PRIORITY_MORE_FAVORABLE);
+            //new DimensionTree()._startAsyncThreads();
              qp.GetUserRequestedQueryData(MDXQObj.entryPerDimension,MDXQObj.rootDimensionTree,MDXQObj.DimensionInput,MDXQObj.measuresObj,
                     MDXQObj.measureMap,MDXQObj.measureInput);
             isComplete = true;

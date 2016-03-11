@@ -235,7 +235,7 @@ public class DimensionTree extends Fragment{
         }
     }
 
-    private void _startAsyncThreads(){
+    public void _startAsyncThreads(){
         try {
             // start parallel thread to fetch inflated data for leaf levels
             CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,

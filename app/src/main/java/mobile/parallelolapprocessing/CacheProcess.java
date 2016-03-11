@@ -64,7 +64,7 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
 
         //Add measures to the first axis
         newAxis.add(allAxisDetails.get(0).get(0));
-
+        int dimenAxis =1;
         for(int i=0;i<allLeaves.size();i++){
             //Individual axis
             List<HashMap<Integer,TreeNode>> axis = allLeaves.get(i);
@@ -72,6 +72,7 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
             for(int j=0;j<axis.size();j++){
                 dimensionList.addAll(axis.get(j).keySet());
             }
+            dimensionList.addAll(allAxisDetails.get(0).get(dimenAxis++));
 
             newAxis.add(dimensionList);
         }
@@ -95,12 +96,28 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
 
                 TreeNode child = keyValPairsForDimension.get(allAxisDetails.get(i).get(j));
                 if (child != null) {
-                    if(child.getChildren().size()==0)
+                    List<TreeNode> children = child.getChildren();
+                    if(children!=null && children.size()==0)
                     {
                     // 1st time this is running and the parent node itself is leaf node:
                      // then go back 1 level up and run for its parent
                         child = child.getParent();
 
+                    }
+                    else{
+                        // the following section deals with situations like: Education. All Customers.  We know that the server will send values for all under 'All custmers' sections
+                        // so if we go to its parent that is Education, its children will be 'All customers' which must be replaced by all those children under it.
+                        // Education.Children--> All customers but we need Bachelors, Hgh School  Graduates etc
+
+                        if(children!=null && children.size()>0 && children.size()<=1) {
+                            String childName = children.get(0).getReference().toString();
+                            if (!childName.contains("All")) {
+                                child = child.getParent();
+                            } else {
+                                child = children.get(0);
+
+                            }
+                        }
                     }
                     // old approach
                     //parents.add(child);
@@ -137,7 +154,7 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
 
             mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
                     keyValPairsForDimension, true,false);
-            if(CacheProcess.inflatedQueries!=null && CacheProcess.inflatedQueries.size()>0) {
+            if(CacheProcess.inflatedQueries!=null && CacheProcess.inflatedQueries.size()>0) {//Issue
                 List<List<Long>> cubeInflated = c.GetCubeData(CacheProcess.inflatedQueries.get(CacheProcess.inflatedQueries.size()-1));
 
                 mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated);// assuming only 1 query entry
