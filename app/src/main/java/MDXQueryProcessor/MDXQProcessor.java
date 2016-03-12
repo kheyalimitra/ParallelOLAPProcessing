@@ -190,22 +190,8 @@ public class MDXQProcessor {
         for(int i=0;i<nQueryCount;i++)
         {
             String querystring = this._generateSubQueryString(queryDetails.get(i), selectedMeasures, measureMap, keyValPairsForDimension, isAddDescendant, isAddInflatedSiblings);
-            if(isAddDescendant) {
-                // if exact same query is already done before
-                if(!isAddInflatedSiblings) {
-                    if (!CacheProcess.inflatedQueries.contains(querystring) && !CacheProcessUpto1Level.inflatedQueries.contains(querystring))
-                        CacheProcess.inflatedQueries.add(querystring);
-                }
-                else{
-                    if (!CacheProcessUpto1Level.inflatedQueries.contains(querystring)&& !CacheProcess.inflatedQueries.contains(querystring))
-                        CacheProcessUpto1Level.inflatedQueries.add(querystring);
-                }
+            subQueries.add(querystring);
 
-            }
-            else
-            {
-                subQueries.add(querystring);
-            }
         }
        // subQueries.add("select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Employee].[Employees].[All Employees]},5,LEAVES) on axis(1) ,DESCENDANTS({[Geography].[Geography].[All Geographies]},4,LEAVES) on axis(2) from [Adventure Works]");
         return subQueries;
@@ -239,8 +225,8 @@ public class MDXQProcessor {
                 String dimensionName = node.getHierarchyName();
                 dimensionName =  dimensionName.substring(dimensionName.indexOf(".")+1);// removing [Dimension] part from the string : else it will not execute
 
-                 //if (isAddDescendant)
-                    //dimensionName += ".children";
+                 if (isAddDescendant)
+                    dimensionName += ".children";
                  //if(!dimensionList.contains(dimensionName)) {
                  dimensionList.add(dimensionName);
                // }
@@ -253,11 +239,11 @@ public class MDXQProcessor {
                 }
                 //TreeNode parentNode = node.getParent();// whose parent???
                 //distance= parentNode.getLevel() - (node.getLevel() - 2);
-                //axisWiseQuery.add("{" + TextUtils.join(",", dimensionList) + "} on axis(" + (i) + ") ");//+ distance +
+                axisWiseQuery.add("{" + TextUtils.join(",", dimensionList) + "} on axis(" + (i) + ") ");//+ distance +
 
-                axisWiseQuery.add("DESCENDANTS({" + TextUtils.join(",", dimensionList) + "},"
-                        +"1,) on axis(" + (i) + ") ");//+ distance +
-                        // +",LEAVES) on axis(" + (i) + ") ");//+ distance +
+                //axisWiseQuery.add("DESCENDANTS({" + TextUtils.join(",", dimensionList) + "},"
+                  //      +"1,) on axis(" + (i) + ") ");//+ distance +
+                      //   +",LEAVES) on axis(" + (i) + ") ");//+ distance +
 
             }
             else {
@@ -468,19 +454,21 @@ public class MDXQProcessor {
             for (int i = 0; i < cellMeasuresCount; i++) {
 
                 long cellOrdinal = downloadedCube.get(i).get(1);//1 cell ordinal value : 0 result
-                String combination = combinations.get((int) cellOrdinal);// cell ordinal :[cellMeasure, cellOrdinal]
-                if (combination != null) {
-                    // remove from the combination list. this will help to check if evry combination get covered  in next section
-                    combinations.remove((int)cellOrdinal);
-                    String dimensionCombination = this._sortKeyCombination(combination.substring(combination.indexOf("#") + 1));
-                    String measure = combination.substring(0, combination.indexOf("#"));
+                if((int) cellOrdinal< combinations.size()) {
+                    String combination = combinations.get((int) cellOrdinal);// cell ordinal :[cellMeasure, cellOrdinal]
+                    if (combination != null) {
+                        // remove from the combination list. this will help to check if evry combination get covered  in next section
+                        combinations.remove((int) cellOrdinal);
+                        String dimensionCombination = this._sortKeyCombination(combination.substring(combination.indexOf("#") + 1));
+                        String measure = combination.substring(0, combination.indexOf("#"));
 
-                    HashMap<Long, Long> keyVal = new HashMap<>();
+                        HashMap<Long, Long> keyVal = new HashMap<>();
 
-                    //update existing cache
-                    String[] measureList = measure.replace("[", "").replace("]", "").split(",");
-                    _updateMainCache(downloadedCube, totalSum, i, dimensionCombination, keyVal, measureList);
-                    resultSet.put(dimensionCombination,downloadedCube.get(i).get(0));
+                        //update existing cache
+                        String[] measureList = measure.replace("[", "").replace("]", "").split(",");
+                        _updateMainCache(downloadedCube, totalSum, i, dimensionCombination, keyVal, measureList);
+                        resultSet.put(dimensionCombination, downloadedCube.get(i).get(0));
+                    }
                 }
 
             }

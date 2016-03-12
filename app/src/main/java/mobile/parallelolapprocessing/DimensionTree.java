@@ -137,6 +137,7 @@ public class DimensionTree extends Fragment{
                     String totalDimensionPerAxis = dimesionPerAxis.getText().toString();
                     // process MXD query here
                     _processUserMDXquerySelection(selectedQuery,totalAxis,totalDimensionPerAxis);
+                    _startAsyncThreads();
 
                 }
 
@@ -227,7 +228,7 @@ public class DimensionTree extends Fragment{
 
             _populateListView(selectedQuery, this.endTimer - this.startTimer);
             // start asynchronous thread
-            _startAsyncThreads();
+            //_startAsyncThreads();
 
         }
         catch (Exception e){

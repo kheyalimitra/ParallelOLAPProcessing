@@ -77,11 +77,12 @@ public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> {
                     cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
                 }
 
-                mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
+                List<String>  queryListForSiblings = mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
                         keyValPairsForDimension, true, true);
-                if(CacheProcessUpto1Level.inflatedQueries!=null && CacheProcessUpto1Level.inflatedQueries.size()>0) {
-                    List<List<Long>> cubeInflated = c.GetCubeData(CacheProcessUpto1Level.inflatedQueries.get(CacheProcessUpto1Level.inflatedQueries.size()-1));// since last entry is the current one
-                    mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated);// assuming only 1 query entry
+                if(!CacheProcessUpto1Level.inflatedQueries.contains(queryListForSiblings.get(0)) && !CacheProcess.inflatedQueries.contains(queryListForSiblings.get(0))) {
+                   CacheProcessUpto1Level.inflatedQueries.add(queryListForSiblings.get(0));
+                   List<List<Long>> cubeInflated = c.GetCubeData(CacheProcessUpto1Level.inflatedQueries.get(CacheProcessUpto1Level.inflatedQueries.size()-1));// since last entry is the current one
+                   mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated);// assuming only 1 query entry
                 }
             }
         }

@@ -152,9 +152,12 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
                 cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
             }
 
-            mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
+            List<String>  queryListForChildren  = mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
                     keyValPairsForDimension, true,false);
-            if(CacheProcess.inflatedQueries!=null && CacheProcess.inflatedQueries.size()>0) {//Issue
+            if(!CacheProcessUpto1Level.inflatedQueries.contains(queryListForChildren.get(0)) && !CacheProcess.inflatedQueries.contains(queryListForChildren.get(0)))
+            {
+                CacheProcess.inflatedQueries.add(queryListForChildren.get(0));
+
                 List<List<Long>> cubeInflated = c.GetCubeData(CacheProcess.inflatedQueries.get(CacheProcess.inflatedQueries.size()-1));
 
                 mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated);// assuming only 1 query entry
