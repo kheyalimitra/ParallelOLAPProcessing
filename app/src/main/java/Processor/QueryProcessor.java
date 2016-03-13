@@ -10,7 +10,7 @@ import mobile.parallelolapprocessing.MainActivity;
 public class QueryProcessor {
 
 	public static final String olapServiceURL="http://webolap.cmpt.sfu.ca/ElaWebService/Service.asmx";//"http://192.168.0.207/OLAPService/AdventureWorks.asmx";
-	public static HashMap<String,Long> resultSet= new HashMap<>();
+	public static HashMap<String,HashMap<String,Long>> resultSet= new HashMap<>();
 	public void QueryProcessor() {
 	}
 
@@ -58,13 +58,13 @@ public class QueryProcessor {
 
 				List<Integer> selectedMesureKeyList = measuresObj.GetSelectedKeyList(hardcodedInputMeasures, measureMap);
                 // get data from server
-				HashMap<String,Long> resultSetFromServer = mdxQueryProcessorObj.ProcessUserQuery(selectedMesureKeyList, selectedMeasures, selectedDimension, nonCachedKeys, false);
+				HashMap<String,HashMap<String,Long>> resultSetFromServer = mdxQueryProcessorObj.ProcessUserQuery(selectedMesureKeyList, selectedMeasures, selectedDimension, nonCachedKeys, false);
 				// add values from ser to exisitng result set ( in case there are partial hit from cache)
 				resultSet.putAll(resultSetFromServer);
 				// if there is a hit frm cache, take matched part from cache and add it to result set
 				if(originalAtomicKeys.size() != resultSet.size())
 				{
-					resultSet = _getQueryResultFromCache(originalAtomicKeys,resultSet);
+					resultSet = _getQueryResultFromCache(originalAtomicKeys,resultSet, new ArrayList<Integer>(selectedMeasures.keySet()));
 				}
 
 			} else {
@@ -76,7 +76,7 @@ public class QueryProcessor {
 						return true;
 					}
 				else{
-						resultSet = _getQueryResultFromCache(originalAtomicKeys,resultSet);
+						resultSet = _getQueryResultFromCache(originalAtomicKeys,resultSet,new ArrayList<Integer>(selectedMeasures.keySet()));
 
 						MDXUserQuery.isComplete = true;
 						return true;
@@ -91,8 +91,8 @@ public class QueryProcessor {
 		return  true;
 	}
 
-	private HashMap<String, Long>  _getQueryResultFromCache(List<String> originalAtomicKeys, HashMap<String, Long> resultSet) {
-		HashMap<String, Long> newResultSet =  new HashMap<>(resultSet);
+	private HashMap<String, HashMap<String, Long>> _getQueryResultFromCache(List<String> originalAtomicKeys, HashMap<String,HashMap<String, Long>> resultSet, List<Integer>measures) {
+		HashMap<String, HashMap<String, Long>> newResultSet =  new HashMap<>(resultSet);
 		if(originalAtomicKeys.size()>0)
 		{
 			for(int i=0;i<originalAtomicKeys.size();i++)
@@ -102,7 +102,15 @@ public class QueryProcessor {
 					if(!resultSet.containsKey(key)){
 						// fetch value from Cache
 						if(MainActivity.CachedDataCubes.containsKey(key)){
-							newResultSet.put(key, MainActivity.CachedDataCubes.get(key).get(0));
+							// find for specific measures and if found add it to result set
+							HashMap<String,Long> measuresResult =  new HashMap<>();
+							for(Map.Entry entryPair: MainActivity.CachedDataCubes.get(key).entrySet()) {
+								for( int j=0;j<measures.size();j++){
+									if (entryPair.getKey()==measures.get(j).toString())
+										measuresResult.put(measures.get(j).toString(),Long.parseLong(entryPair.getValue().toString()));
+								}
+							}
+							newResultSet.put(key,measuresResult);
 						}
 					}
 				}
