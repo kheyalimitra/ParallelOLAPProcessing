@@ -142,7 +142,7 @@ public class MDXQProcessor {
          * @param filteredKeys
          */
     public HashMap<String,HashMap<String,Long>> ProcessUserQuery(List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,HashMap<Integer,
-            List<TreeNode>> selectedDimension,List<String>filteredKeys,boolean isInnerThreadCalled) throws  Exception{
+            List<TreeNode>> selectedDimension,List<String>filteredKeys,boolean isInnerThreadCalled,boolean isUserThread) throws  Exception{
 
         //String olapServiceURL="http://192.168.0.207/OLAPService/AdventureWorks.asmx";
         // The following function actually calls copresskey method too to use sort and merge
@@ -157,7 +157,7 @@ public class MDXQProcessor {
         List<String> requestedQueries ;
 
         List<List<String>> finalMDXQueries = new ArrayList<>();
-        HashMap<Integer,TreeNode> keyValPairsForDimension = _getKeyValuePairOfSelectedDimensionsFromTree(selectedDimension);
+        HashMap<Integer,TreeNode> keyValPairsForDimension = GetKeyValuePairOfSelectedDimensionsFromTree(selectedDimension);
         requestedQueries = GenerateQueryString(allAxisDetails, selectedMeasures, measureMap, keyValPairsForDimension, false,false);
         finalMDXQueries.add(requestedQueries);
         Cube c =  new Cube(QueryProcessor.olapServiceURL);
@@ -166,7 +166,7 @@ public class MDXQProcessor {
         //"select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Customer].[Education].[All Customers]},1,LEAVES) on axis(1) ,DESCENDANTS({[Date].[Calendar].[All Periods].[CY 2008]},4,LEAVES) on axis(2) from [Adventure Works]";
         List<List<Long>>cubeOriginal = c.GetCubeData(finalMDXQueries.get(0).get(0));
 
-        HashMap<String,HashMap<String,Long>> resultSet =  this.CheckAndPopulateCache(cellOrdinalCombinations.get(0),new ArrayList<List<TreeNode>>(), cubeOriginal);// assuming only 1 query entry
+        HashMap<String,HashMap<String,Long>> resultSet =  this.CheckAndPopulateCache(cellOrdinalCombinations.get(0),new ArrayList<List<TreeNode>>(), cubeOriginal,isUserThread);// assuming only 1 query entry
 
       // start this once the previous is done
         MDXUserQuery.allAxisDetails = allAxisDetails;
@@ -271,7 +271,7 @@ public class MDXQProcessor {
         query.replace("&", "ampersand");
         return query;
     }
-    private HashMap<Integer,TreeNode> _getKeyValuePairOfSelectedDimensionsFromTree(HashMap<Integer,List<TreeNode>>dimensionTree)
+    public HashMap<Integer,TreeNode> GetKeyValuePairOfSelectedDimensionsFromTree(HashMap<Integer,List<TreeNode>>dimensionTree)
     {
         HashMap<Integer,TreeNode>keyValPairs =  new HashMap<>();
         for(int i=0;i<dimensionTree.size();i++)
@@ -452,7 +452,7 @@ public class MDXQProcessor {
         result = newResult;
         return  _generateKeyCombinations(axisIndex+1,keys,result);
     }
-    public HashMap<String,HashMap<String,Long>> CheckAndPopulateCache(List<String> combinations, List<List<TreeNode>> parentEntiresPerAxis, List<List<Long>> downloadedCube) {
+    public HashMap<String,HashMap<String,Long>> CheckAndPopulateCache(List<String> combinations, List<List<TreeNode>> parentEntiresPerAxis, List<List<Long>> downloadedCube, boolean isUserQuery) {
         HashMap<String,HashMap<String,Long>> resultSet =  new HashMap<>();
         HashMap<String,Long> totalSum=new HashMap<>();
         // no possible result
@@ -492,8 +492,10 @@ public class MDXQProcessor {
                     //update existing cache
                     String[] measureList = measure.replace("[", "").replace("]", "").split(",");
 
-                    _updateMainCache(null, totalSum, i, dimensionCombination, keyVal, measureList);
-                    //resultSet.put(dimensionCombination, dummy);
+                    HashMap<String,Long> dummyRecords = _updateMainCache(null, totalSum, i, dimensionCombination, keyVal, measureList);
+                    if(isUserQuery) {
+                       resultSet.put(dimensionCombination,dummyRecords);
+                       }
                 }
             }
            /* if(parentEntiresPerAxis !=null && parentEntiresPerAxis.size()>0) {
@@ -553,14 +555,15 @@ public class MDXQProcessor {
                     measureWiseResult.put(measureList[j].trim(), downloadedCube.get(i).get(0));
                 }
                 else {
-                    measureWiseResult.put(measureList[j].trim(), downloadedCube.get(i).get(0));
+                    measureWiseResult.put(measureList[j].trim(), dummy);
                     keyVal.put(Long.parseLong(measureList[j].trim()), dummy);
+
                 }
 
             }
 
             MainActivity.CachedDataCubes.put(dimensionCombination,keyVal);
-        }
+                   }
         return  measureWiseResult;
     }
 

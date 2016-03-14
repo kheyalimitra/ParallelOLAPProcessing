@@ -6,6 +6,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import DataStructure.TreeNode;
@@ -60,7 +62,6 @@ public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryIn
         {
             inflatedDataDnldThread =new Thread (this);
             inflatedDataDnldThread.start ();
-
 
         }
     }

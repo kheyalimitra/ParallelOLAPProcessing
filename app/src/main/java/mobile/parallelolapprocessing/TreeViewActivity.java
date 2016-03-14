@@ -3,10 +3,12 @@ package mobile.parallelolapprocessing;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
+
 /**
  * Created by KheyaliMitra on 2/12/2016.
  */
-public class TreeViewActivity extends  ActionBarActivity{public final static String View_PARAM = "fragment";
+public class TreeViewActivity extends AppCompatActivity{public final static String View_PARAM = "fragment";
 
     @Override
     protected void onCreate(Bundle bundle) {

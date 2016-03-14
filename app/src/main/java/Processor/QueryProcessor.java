@@ -39,6 +39,7 @@ public class QueryProcessor {
 											 List<String> hardcodedInputMeasures) throws Exception {
 
 		DataCubeAxis dca = new DataCubeAxis();
+
 		try {
 			HashMap<Integer, List<TreeNode>> selectedDimension = dca.GetTreeNodeListForEachAxis(rootDimensionTree, hardcodedInputDim, entryPerDimension);
 			HashMap<Integer, String> selectedMeasures = measuresObj.GetHashKeyforSelecteditems(hardcodedInputMeasures, measureMap);
@@ -53,12 +54,12 @@ public class QueryProcessor {
 			List<String> originalAtomicKeys = new ArrayList<>(generatedKeys);
 			//check from cache
 			List<String> nonCachedKeys = mdxQueryProcessorObj.checkCachedKeysToRemoveDuplicateEntries(generatedKeys, selectedMeasures.keySet());
+			List<Integer> selectedMesureKeyList = measuresObj.GetSelectedKeyList(hardcodedInputMeasures, measureMap);
 
 			if (nonCachedKeys.size() > 0) {
 
-				List<Integer> selectedMesureKeyList = measuresObj.GetSelectedKeyList(hardcodedInputMeasures, measureMap);
-                // get data from server
-				HashMap<String,HashMap<String,Long>> resultSetFromServer = mdxQueryProcessorObj.ProcessUserQuery(selectedMesureKeyList, selectedMeasures, selectedDimension, nonCachedKeys, false);
+				 // get data from server
+				HashMap<String,HashMap<String,Long>> resultSetFromServer = mdxQueryProcessorObj.ProcessUserQuery(selectedMesureKeyList, selectedMeasures, selectedDimension, nonCachedKeys, false,true);
 				// add values from ser to exisitng result set ( in case there are partial hit from cache)
 				resultSet.putAll(resultSetFromServer);
 				// if there is a hit frm cache, take matched part from cache and add it to result set
@@ -70,7 +71,16 @@ public class QueryProcessor {
 			} else {
 				// 100% hit
 				// use original Atomic keys to fetch records from cache and display to user
-					if(resultSet.size()==originalAtomicKeys.size()){
+				MDXQProcessor mdxObj = new MDXQProcessor();
+				MDXUserQuery.keyValPairsForDimension =mdxObj.GetKeyValuePairOfSelectedDimensionsFromTree(selectedDimension);
+				MDXUserQuery.allAxisDetails = mdxObj.GetAxisDetails(selectedMesureKeyList, originalAtomicKeys);
+				MDXUserQuery.cellOrdinalCombinations= new ArrayList<>();
+				int queryCount =MDXUserQuery.allAxisDetails.size();
+				for(int i=0;i<queryCount;i++) {
+					MDXUserQuery.cellOrdinalCombinations.add(mdxObj.GenerateCellOrdinal(MDXUserQuery.allAxisDetails.get(i)));
+				}
+				MDXUserQuery.measureMap  = _getSelectedMeasureFromMap(measureMap,selectedMesureKeyList);
+				if(resultSet.size()==originalAtomicKeys.size()){
 
 						MDXUserQuery.isComplete = true;
 						return true;
@@ -89,6 +99,15 @@ public class QueryProcessor {
 		}
 		MDXUserQuery.isComplete = true;
 		return  true;
+	}
+
+	private HashMap<Integer, String> _getSelectedMeasureFromMap(HashMap<Integer, String> measureMap, List<Integer> selectedMesureKeyList) {
+		HashMap<Integer, String> _measureKeyVal = new HashMap<>();
+		for (int i=0;i<selectedMesureKeyList.size();i++){
+			int key = selectedMesureKeyList.get(i);
+			_measureKeyVal.put(key,measureMap.get(key).toString());
+		}
+		return _measureKeyVal;
 	}
 
 	private HashMap<String, HashMap<String, Long>> _getQueryResultFromCache(List<String> originalAtomicKeys, HashMap<String,HashMap<String, Long>> resultSet, List<Integer>measures) {

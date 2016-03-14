@@ -82,7 +82,7 @@ public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> {
                 if(!CacheProcessUpto1Level.inflatedQueries.contains(queryListForSiblings.get(0)) && !CacheProcess.inflatedQueries.contains(queryListForSiblings.get(0))) {
                    CacheProcessUpto1Level.inflatedQueries.add(queryListForSiblings.get(0));
                    List<List<Long>> cubeInflated = c.GetCubeData(CacheProcessUpto1Level.inflatedQueries.get(CacheProcessUpto1Level.inflatedQueries.size()-1));// since last entry is the current one
-                   mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated);// assuming only 1 query entry
+                   mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated,false);// assuming only 1 query entry
                 }
             }
         }

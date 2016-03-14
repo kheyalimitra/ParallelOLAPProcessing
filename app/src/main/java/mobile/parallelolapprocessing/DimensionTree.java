@@ -6,6 +6,7 @@ package mobile.parallelolapprocessing;
 
 import android.app.Fragment;
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -45,7 +46,8 @@ import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
 import mobile.parallelolapprocessing.Async.Call.RootDimension;
 import mobile.parallelolapprocessing.Async.IconTreeItem;
 import mobile.parallelolapprocessing.Async.ParameterWrapper.MDXUserQueryInput;
-import mobile.parallelolapprocessing.UI.DimensionMesuresTable;
+import mobile.parallelolapprocessing.UI.DimensionMeasureGoogleHTMLTable;
+import mobile.parallelolapprocessing.UI.IDimensionMeasureDisplay;
 
 public class DimensionTree extends Fragment{
 
@@ -61,6 +63,7 @@ public class DimensionTree extends Fragment{
     private ArrayList<String> SelectedMeasures;
     public static long startTimer=0;
     public static long endTimer =0;
+    public  static  long timeTaken =0;
     private class SimpleArrayAdapter extends ArrayAdapter<String> {
         public SimpleArrayAdapter(Context context, List<String> objects) {
             super(context, android.R.layout.simple_list_item_1, objects);
@@ -86,6 +89,7 @@ public class DimensionTree extends Fragment{
         setHasOptionsMenu(true);
         SelectedDimensions =  new ArrayList<String>();
         SelectedMeasures = new ArrayList<String>();
+
     }
 
     @Override
@@ -134,11 +138,14 @@ public class DimensionTree extends Fragment{
             {
                 @Override
                 public void onClick(View v) {
+                    _resetStaticVariablesRelatedToQuery();
                     String totalAxis = axis.getText().toString();
                     String totalDimensionPerAxis = dimesionPerAxis.getText().toString();
                     // process MXD query here
                     _processUserMDXquerySelection(selectedQuery,totalAxis,totalDimensionPerAxis);
                     _startAsyncThreads();
+
+
 
                 }
 
@@ -162,6 +169,16 @@ public class DimensionTree extends Fragment{
             Toast.makeText(MainActivity.MainContext, "Error in selection. Please retry.", Toast.LENGTH_LONG).show();
         }
         return rootView;
+    }
+
+    private void _resetStaticVariablesRelatedToQuery() {
+        MDXUserQuery.allAxisDetails =  new ArrayList<>();
+        MDXUserQuery.selectedMeasures =  new ArrayList<>();
+        MDXUserQuery.measureMap =  new HashMap<>();
+        MDXUserQuery.keyValPairsForDimension =  new HashMap<>();
+        MDXUserQuery.cellOrdinalCombinations =  new ArrayList<>();
+        QueryProcessor.resultSet = new HashMap<>();
+
     }
 
     private void _captureUserSelectionForDimensionMeasures(ViewGroup containerView, ViewGroup measureContainer, Button execBtn, Button backBtn, ListView selectedQuery, TextView finalSelection, EditText axis,EditText dimesionPerAxis) {
@@ -226,7 +243,7 @@ public class DimensionTree extends Fragment{
             }
             this.endTimer = System.currentTimeMillis();
 
-
+            timeTaken = this.endTimer - this.startTimer;
             _populateListView(selectedQuery, this.endTimer - this.startTimer);
              // start asynchronous thread
             //_startAsyncThreads();
@@ -262,23 +279,26 @@ public class DimensionTree extends Fragment{
     private void _populateListView(ListView selectedQuery, long timeTaken) {
         // if result set has value, display it
         if (QueryProcessor.resultSet.size()>0){
-            /*List<Long> results = new ArrayList<Long>(QueryProcessor.resultSet.values());
-            List<String> newList = new ArrayList<String>(results.size());
-            for (Long myInt : results) {
-                newList.add(String.valueOf(myInt));
-            }
+            //<Long> results = new ArrayList<Long>(QueryProcessor.resultSet.values());
+            List<String> newList = new ArrayList<String>();
+            //for (Long myInt : results) {
+             //   newList.add(String.valueOf(myInt));
+           // }
             newList.add("total Time taken (ms): "+String.valueOf(timeTaken));
             SimpleArrayAdapter a = new SimpleArrayAdapter(MainActivity.MainContext,newList);
             //Sets Adapter
-            selectedQuery.setAdapter(a);*/
+            selectedQuery.setAdapter(a);
 
         }
+        try {
+            Intent intent = new Intent(MainActivity.MainContext, GoogleDisplayLogic.class);
+            DimensionTree.this.startActivity(intent);
+        } catch (Exception e) {
+            String s = e.getMessage();
+        }
 
-        String formattedTable =  new DimensionMesuresTable().GenerateTableForGoogleDatatable(QueryProcessor.resultSet,MDXUserQuery.keyValPairsForDimension,MDXUserQuery.measureMap);
 
-        // flush previous query by user:
-        MDXUserQuery.isComplete =  false;
-        QueryProcessor.resultSet = new HashMap<>();
+
         this.startTimer =0;
         this.endTimer =0;
 

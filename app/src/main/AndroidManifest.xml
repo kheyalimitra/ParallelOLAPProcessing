@@ -20,6 +20,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".TreeViewActivity" />
+        <activity android:name=".GoogleDisplayLogic"/>
     </application>
 
 </manifest>
