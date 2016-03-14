@@ -41,8 +41,8 @@ public class GoogleDisplayLogic extends AppCompatActivity {
         //String s = _displayResultInTable();
         IDimensionMeasureDisplay displayResult = new DimensionMeasureGoogleHTMLTable();
         String formattedTable = displayResult.GetDisplay(QueryProcessor.resultSet,
-                MDXUserQuery.keyValPairsForDimension,
-                MDXUserQuery.measureMap);
+                DimensionMeasureGoogleHTMLTable.keyValPairsForDimension,// no need to pass it
+                DimensionMeasureGoogleHTMLTable.measureMap);// no need to pass it
         Log.d("Html string:",formattedTable);
         _genertateTable(formattedTable);
         // flush previous query by user:
@@ -51,20 +51,7 @@ public class GoogleDisplayLogic extends AppCompatActivity {
 
 
     }
-  private String _displayResultInTable(){
-      StringBuilder sb= new StringBuilder();
-      for(Map.Entry keyVal: QueryProcessor.resultSet.entrySet()){
-          String combination = keyVal.getKey().toString();
-          String[] dimensionNames = _getDimensionNamesFromKeys(combination);
-          if(dimensionNames!=null)
-              sb.append(dimensionNames.toString());
-          HashMap<String, Long>measureWiseResult = (HashMap<String, Long>)keyVal.getValue();
 
-
-      }
-
-      return  sb.toString();
-  }
 
     private String[] _getDimensionNamesFromKeys(String combination) {
         String[] keys =  combination.split("#");

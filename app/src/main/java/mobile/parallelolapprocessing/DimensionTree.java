@@ -178,6 +178,11 @@ public class DimensionTree extends Fragment{
         MDXUserQuery.keyValPairsForDimension =  new HashMap<>();
         MDXUserQuery.cellOrdinalCombinations =  new ArrayList<>();
         QueryProcessor.resultSet = new HashMap<>();
+        endTimer =0;
+        startTimer=0;
+        timeTaken=0;
+        // flushing all existing values which got displayed in last call
+        new DimensionMeasureGoogleHTMLTable(true);
 
     }
 

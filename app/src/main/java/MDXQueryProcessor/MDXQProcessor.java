@@ -49,30 +49,47 @@ public class MDXQProcessor {
      * @param keys
      * @return
      */
-    public List<String> checkCachedKeysToRemoveDuplicateEntries(List<String>keys,Set<Integer> selectedMeasures )
+    public HashMap<String,List<String>> checkCachedKeysToRemoveDuplicateEntries(List<String>keys,Set<Integer> selectedMeasures )
     {
         List<Integer> selectedMeasuresKyes = new ArrayList<>(selectedMeasures);
+        HashMap<String, List<String>> finalDimensionMeasures =  new HashMap<>();
+        List<String> finalMeasures =  new ArrayList<>();
+        for(Integer index: selectedMeasuresKyes){
+            finalMeasures.add(index.toString());
+        }
         if(MainActivity.CachedDataCubes.size()>0) {
             for (int i = 0; i < keys.size(); i++) {
                 if (MainActivity.CachedDataCubes.containsKey(keys.get(i))) {
                     HashMap<Long,Long> measuresSpecificList = MainActivity.CachedDataCubes.get(keys.get(i));
+                    int measuresFoundCount=0;
+                    int totalSelectedMeasures = selectedMeasures.size();
                     for(int j=0;j<measuresSpecificList.size();j++) {
-                        for(int k=0;k<selectedMeasures.size();k++){
-                            String measureName =  selectedMeasuresKyes.get(k).toString();
-                            HashMap<String, Long> measuresResult =  new HashMap<>();
-                            if(measuresSpecificList.containsKey(Long.parseLong(measureName))) {// finding out right measures for dimension combinations
-                                //QueryProcessor.resultSet.put(keys.get(i), new HashMap<>(selectedMeasuresKyes.get(k).toString(),MainActivity.CachedDataCubes.get(keys.get(i)).get(Long.parseLong(selectedMeasuresKyes.get(k).toString()))));
-                                // find for specific measures and if found add it to result set
-
-                                Long val =  measuresSpecificList.get(measureName);
-
-                                measuresResult.put(measureName,val );
+                        for(int k=0;k<selectedMeasuresKyes.size();k++) {
+                            if (selectedMeasuresKyes.size() > 0) {
+                                String measureName = selectedMeasuresKyes.get(k).toString();
+                                HashMap<String, Long> measuresResult = new HashMap<>();
+                                if (measuresSpecificList.containsKey(Long.parseLong(measureName))) {// finding out right measures for dimension combinations
+                                    //QueryProcessor.resultSet.put(keys.get(i), new HashMap<>(selectedMeasuresKyes.get(k).toString(),MainActivity.CachedDataCubes.get(keys.get(i)).get(Long.parseLong(selectedMeasuresKyes.get(k).toString()))));
+                                    // find for specific measures and if found add it to result set
+                                    Long key = Long.parseLong(measureName);
+                                    Long val = measuresSpecificList.get(key);
+                                    measuresFoundCount++;
+                                    measuresResult.put(measureName, val);
+                                    QueryProcessor.resultSet.put(keys.get(i), measuresResult);
+                                    // if found remove from selection list
+                                    //selectedMeasures.remove(k);
+                                    selectedMeasuresKyes.remove(k);
+                                    finalMeasures.remove(k);
+                                    k--;
                                 }
-                                QueryProcessor.resultSet.put(keys.get(i),measuresResult);
-                                keys.remove(i--);// to reset the index field for iteration
+
                             }
                         }
-
+                    }
+                    // if all selected measures are found, then this key should be deleted
+                    if(measuresFoundCount==totalSelectedMeasures) {
+                        keys.remove(i--);// to reset the index field for iteration
+                    }
 
                 }
                 else{
@@ -80,7 +97,10 @@ public class MDXQProcessor {
                 }
             }
         }
-        return  keys;
+        finalDimensionMeasures.put("0",keys);
+        finalDimensionMeasures.put("1",finalMeasures);
+
+        return  finalDimensionMeasures;
 
     }
     private void _drillDownCacheToSearchDimensionEntry(List<String>keys){

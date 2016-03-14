@@ -2,18 +2,41 @@ package mobile.parallelolapprocessing.UI;
 
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.transform.Result;
 
 import DataStructure.TreeNode;
+import mobile.parallelolapprocessing.Async.ParameterWrapper.MDXUserQueryInput;
 
 /**
  * Created by KheyaliMitra on 3/12/2016.
  */
 public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay {
 
+    public static List<List<List<Integer>>> allAxisDetails;
+    public static List<Integer> selectedMeasures;
+    public static HashMap<Integer, String> measureMap;
+    public static HashMap<Integer, TreeNode> keyValPairsForDimension;
+    public static List<List<String>>cellOrdinalCombinations;
+
+
+    public DimensionMeasureGoogleHTMLTable(){
+
+    }
+    public DimensionMeasureGoogleHTMLTable(boolean isClean){
+        if(isClean) {
+            allAxisDetails = new ArrayList<>();
+            selectedMeasures = new ArrayList<>();
+            measureMap = new HashMap<>();
+            keyValPairsForDimension = new HashMap<>();
+            cellOrdinalCombinations = new ArrayList<>();
+        }
+
+    }
     /**
      * Get HTML display for google datatable
      * @param ResultSet
