@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import javax.xml.transform.Result;
 
@@ -16,60 +17,48 @@ import mobile.parallelolapprocessing.Async.ParameterWrapper.MDXUserQueryInput;
  * Created by KheyaliMitra on 3/12/2016.
  */
 public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay {
-
-    public static List<List<List<Integer>>> allAxisDetails;
-    public static List<Integer> selectedMeasures;
-    public static HashMap<Integer, String> measureMap;
-    public static HashMap<Integer, TreeNode> keyValPairsForDimension;
-    public static List<List<String>>cellOrdinalCombinations;
-
-
-    public DimensionMeasureGoogleHTMLTable(){
-
-    }
-    public DimensionMeasureGoogleHTMLTable(boolean isClean){
-        if(isClean) {
-            allAxisDetails = new ArrayList<>();
-            selectedMeasures = new ArrayList<>();
-            measureMap = new HashMap<>();
-            keyValPairsForDimension = new HashMap<>();
-            cellOrdinalCombinations = new ArrayList<>();
-        }
-
-    }
-    /**
-     * Get HTML display for google datatable
-     * @param ResultSet
-     * @param DimensionRef
-     * @param MeasuresRef
+     public static Long DataDisplaySize  = 8L;// 8 bytes
+    /***
+     * Get HTML display for Table
+     * @param CacheContent
+     * @param UserSelectedKeyCombinations
+     * @param UserSeletedMeasures
+     * @param DimensionReference
+     * @param MeasureReference
      * @return
      */
-    public String GetDisplay(HashMap<String,HashMap<String,Long>>  ResultSet,
-                                HashMap<Integer, TreeNode> DimensionRef,
-                                HashMap<Integer,String> MeasuresRef){
+    public String GetDisplay(WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+                             List<String> UserSelectedKeyCombinations,
+                             List<Integer> UserSeletedMeasures,
+                             HashMap<Integer, TreeNode> DimensionReference,
+                             HashMap<Integer, String> MeasureReference) {
         try{
-            String text = _generateHTML(ResultSet,DimensionRef,MeasuresRef).toString();
-        return text;
+            // flush previous data size:
+            DimensionMeasureGoogleHTMLTable.DataDisplaySize = 8L;
+            String text = _generateHTML(CacheContent,UserSelectedKeyCombinations,
+                    UserSeletedMeasures,DimensionReference,MeasureReference).toString();
+            return text;
         }
         catch(Exception ex){
             String ts = ex.getMessage();
             Log.d("YourTag", ts);
-            Log.d("YourTag", ResultSet.toString());
+            //Log.d("YourTag", ResultSet.toString());
             return ts;
         }
-
     }
-
-    private StringBuilder _generateHTML(HashMap<String,HashMap<String,Long>>  ResultSet,
-                                        HashMap<Integer, TreeNode> DimensionRef,
-                                        HashMap<Integer,String> MeasuresRef){
+    private StringBuilder _generateHTML(WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+                                        List<String> UserSelectedKeyCombinations,
+                                        List<Integer> UserSeletedMeasures,
+                                        HashMap<Integer, TreeNode> DimensionReference,
+                                        HashMap<Integer, String> MeasureReference){
 
         StringBuilder sb = new StringBuilder("<html><head><title>Measure Dimension Display</title></head><body>\n");
         sb.append("<script type=\"text/javascript\" src=\"https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1','packages':['table']}]}\"></script>\n" +
                 " <div id=\"table_div\" style=\" width=700px; height: 250px;\"></div>");
         sb.append("<script type=\"text/javascript\">\n");
         sb.append(this._generateCallFunction());
-        sb.append(this._generateDrawTableFunction(ResultSet,DimensionRef,MeasuresRef));
+        sb.append(this._generateDrawTableFunction(CacheContent,UserSelectedKeyCombinations,
+                UserSeletedMeasures,DimensionReference,MeasureReference));
         sb.append("</script>\n");
         sb.append("</body></html>");
         return sb;
@@ -77,14 +66,18 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
     private StringBuilder _generateCallFunction(){
         return new StringBuilder("google.setOnLoadCallback(drawTable);\n");
     }
-    private StringBuilder _generateDrawTableFunction(HashMap<String,HashMap<String,Long>>  ResultSet,
-                                                     HashMap<Integer, TreeNode> DimensionRef,
-                                                     HashMap<Integer,String> MeasuresRef){
+    private StringBuilder _generateDrawTableFunction(WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+                                                     List<String> UserSelectedKeyCombinations,
+                                                     List<Integer> UserSeletedMeasures,
+                                                     HashMap<Integer, TreeNode> DimensionReference,
+                                                     HashMap<Integer, String> MeasureReference){
+
         StringBuilder sb = new StringBuilder();
         sb.append("function drawTable() {\n" +
                 "        var data = new google.visualization.DataTable();");
-        sb.append(this._generateColumns(ResultSet, MeasuresRef));
-        sb.append(this._generateRows(ResultSet, DimensionRef));
+        sb.append(this._generateColumns(UserSeletedMeasures, MeasureReference));
+        sb.append(this._generateRows(CacheContent,UserSelectedKeyCombinations, UserSeletedMeasures,
+                DimensionReference));
         sb.append("var table = new google.visualization.Table(document.getElementById('table_div'));\n" +
                 "\n" +
                 "        table.draw(data, {allowHtml: true});\n" +
@@ -94,50 +87,50 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
 
     /**
      * Generates columns for for google table
-     * @param ResultSet
-     * @param MeasuresRef
+     * @param UserSeletedMeasures
+     * @param MeasureReferencef
      * @return
      */
-    private StringBuilder _generateColumns(HashMap<String,HashMap<String,Long>>  ResultSet,
-                                           HashMap<Integer,String> MeasuresRef){
+    private StringBuilder _generateColumns(List<Integer> UserSeletedMeasures,
+                                           HashMap<Integer, String> MeasureReferencef) {
         StringBuilder sb = new StringBuilder();
 
         //Add columns for dimensions
         sb.append("data.addColumn('string','Dimension');\n");
 
-        //Generates columns for measures
-        for(Map.Entry entryPairResultSet:ResultSet.entrySet()){
-            HashMap<String,Long> measures = (HashMap<String,Long>)entryPairResultSet.getValue();
-            for(Map.Entry keyValuePair:measures.entrySet()){
-                Integer measuresInt = Integer.parseInt(keyValuePair.getKey().toString());
-                sb.append("data.addColumn('number',");
+        //Add columns for all selected measures
+        for (Integer measureInt : UserSeletedMeasures) {
+            sb.append("data.addColumn('number',");
 
-                sb.append("'");
-                sb.append(MeasuresRef.get(measuresInt));
-                sb.append("'");
+            sb.append("'");
+            sb.append(MeasureReferencef.get(measureInt));
+            sb.append("'");
 
-                sb.append(");\n");
-            }
-            return sb;
+            sb.append(");\n");
         }
         return sb;
     }
 
     /**
-     * Generates all rows javascript
-     * @param ResultSet
-     * @param DimensionRef
+     * Generates all rows for javascript
+     * @param CacheContent
+     * @param UserSelectedKeyCombinations
+     * @param UserSeletedMeasures
+     * @param DimensionReference
      * @return
      */
-    private StringBuilder _generateRows(HashMap<String,HashMap<String,Long>>  ResultSet,
-                                        HashMap<Integer, TreeNode> DimensionRef){
+    private StringBuilder _generateRows(WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+                                        List<String> UserSelectedKeyCombinations,
+                                        List<Integer> UserSeletedMeasures,
+                                        HashMap<Integer, TreeNode> DimensionReference){
         StringBuilder sb = new StringBuilder();
 
         sb.append("data.addRows(");
         sb.append("[");
         Boolean isOneRow = false;
-        for(Map.Entry keyValuePair: ResultSet.entrySet() ){
-            sb.append(this._generateSingleRow(keyValuePair, DimensionRef));
+        for(String keyCombination: UserSelectedKeyCombinations ){
+            sb.append(this._generateSingleRow(keyCombination,CacheContent,
+                     UserSeletedMeasures,DimensionReference));
             sb.append(",\n");
             isOneRow = true;
         }
@@ -153,22 +146,27 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
 
     /**
      * Generates single row JSON
-     * @param keyValuePair
-     * @param DimensionRef
+     * @param CacheContent
+     * @param KeyCombination
+     * @param UserSeletedMeasures
+     * @param DimensionReference
      * @return
      */
-    private StringBuilder _generateSingleRow(Map.Entry keyValuePair,HashMap<Integer, TreeNode> DimensionRef){
-        StringBuilder sb = new StringBuilder();
+    private StringBuilder _generateSingleRow(String KeyCombination,
+                                             WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+                                             List<Integer> UserSeletedMeasures,
+                                             HashMap<Integer, TreeNode> DimensionReference){
+    StringBuilder sb = new StringBuilder();
         sb.append("[");
 
         sb.append("'");
         //Dimension key combination conversion
-        sb.append(this._convertKeyToDimension(keyValuePair.getKey().toString(),DimensionRef));
+        sb.append(this._convertKeyToDimension(KeyCombination,DimensionReference));
         sb.append("'");
 
         sb.append(",");
         try {
-            sb.append(this._convertKeyToMeasures((HashMap<String, Long>) keyValuePair.getValue()));
+            sb.append(this._getAllMeasureValues(KeyCombination,CacheContent,UserSeletedMeasures));
         }
         catch(Exception ex){
             sb.append(ex.getLocalizedMessage());
@@ -200,26 +198,36 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
     }
 
     /**
-     * Convert key string measure to string
-     * @param measures
+     * Get measure values
+     * @param KeyCombination
+     * @param CacheContent
+     * @param UserSeletedMeasures
      * @return
      */
-    private StringBuilder _convertKeyToMeasures(HashMap<String,Long> measures) {
-
-        if(measures.size()  == 0){
-            return new StringBuilder("0");
-        }
+    private StringBuilder _getAllMeasureValues(String KeyCombination,
+                                                WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+                                                List<Integer> UserSeletedMeasures) {
 
         StringBuilder sb = new StringBuilder();
         int i=0;
-        for(Map.Entry keyval:measures.entrySet()){
-            Long val = 0L;
-            if(keyval.getValue() != null) {
-                val = (Long) keyval.getValue();
-            }
-            sb.append(val+",");
-        }
+        for(Integer measureInt:UserSeletedMeasures){
+            WeakHashMap<Integer, Long> keyValPair = CacheContent.get(KeyCombination);
+            if(keyValPair!=null) {
+                // calculating total size of data which is displayed (approximately)
+                DataDisplaySize *= 2;// [cellordinal, value] pair and both are Long
+                Long val = keyValPair.get(measureInt);
+                if (val != null) {
+                    sb.append(val + ",");
 
-        return new StringBuilder(sb.substring(0,sb.length() - 1));
+                }
+            }
+        }
+        StringBuilder newSB = new StringBuilder();
+        if(sb.length()>0) {
+            newSB = new StringBuilder(sb.substring(0, sb.length() - 1));
+        }
+        return newSB;
     }
+
+
 }

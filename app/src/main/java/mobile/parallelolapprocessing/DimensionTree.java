@@ -39,6 +39,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import DataRetrieval.Dimension;
+import MDXQueryProcessor.MDXQProcessor;
 import Processor.QueryProcessor;
 import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
 import mobile.parallelolapprocessing.Async.Call.DimensionHierarchy;
@@ -61,6 +63,10 @@ public class DimensionTree extends Fragment{
     public static DataStructure.TreeNode HierarchyNode;
     private ArrayList<String> SelectedDimensions;
     private ArrayList<String> SelectedMeasures;
+
+    public static List<Integer> UserSelectedMeasures;
+    public static List<String> UserSelectedDimensionCombinations;
+
     public static long startTimer=0;
     public static long endTimer =0;
     public  static  long timeTaken =0;
@@ -138,12 +144,11 @@ public class DimensionTree extends Fragment{
             {
                 @Override
                 public void onClick(View v) {
-                    _resetStaticVariablesRelatedToQuery();
                     String totalAxis = axis.getText().toString();
                     String totalDimensionPerAxis = dimesionPerAxis.getText().toString();
                     // process MXD query here
                     _processUserMDXquerySelection(selectedQuery,totalAxis,totalDimensionPerAxis);
-                    _startAsyncThreads();
+                    //_startAsyncThreads();
 
 
 
@@ -158,9 +163,11 @@ public class DimensionTree extends Fragment{
                 @Override
                 public void onClick(View v) {
                     _manageFramControlVisibilityFromBackButton(containerView, measureContainer, execBtn, selectedQuery, finalSelection);
-                    // flush the previous selection
+                    // flush  previous selection
                     SelectedDimensions =  new ArrayList<>();
                     SelectedMeasures =  new ArrayList<>();
+                    _resetStaticVariablesRelatedToQuery();
+
                 }
             };
             backBtn.setOnClickListener(backButtonListener);
@@ -178,17 +185,20 @@ public class DimensionTree extends Fragment{
         MDXUserQuery.keyValPairsForDimension =  new HashMap<>();
         MDXUserQuery.cellOrdinalCombinations =  new ArrayList<>();
         QueryProcessor.resultSet = new HashMap<>();
+        UserSelectedDimensionCombinations = new ArrayList<>();
+        UserSelectedMeasures  =  new ArrayList<>();
+
         endTimer =0;
         startTimer=0;
         timeTaken=0;
         // flushing all existing values which got displayed in last call
-        new DimensionMeasureGoogleHTMLTable(true);
+        //new DimensionMeasureGoogleHTMLTable(true);
 
     }
 
     private void _captureUserSelectionForDimensionMeasures(ViewGroup containerView, ViewGroup measureContainer, Button execBtn, Button backBtn, ListView selectedQuery, TextView finalSelection, EditText axis,EditText dimesionPerAxis) {
 
-        _setVisibilitySettings(containerView, measureContainer, execBtn, backBtn, selectedQuery, finalSelection, axis,dimesionPerAxis);
+        _setVisibilitySettings(containerView, measureContainer, execBtn, backBtn, selectedQuery, finalSelection, axis, dimesionPerAxis);
         final LinkedHashMap<String, String> listItems = new LinkedHashMap<>();
 
         listItems.put("First","Selected Dimensions are given below:");
@@ -250,8 +260,11 @@ public class DimensionTree extends Fragment{
 
             timeTaken = this.endTimer - this.startTimer;
             _populateListView(selectedQuery, this.endTimer - this.startTimer);
+
              // start asynchronous thread
-            //_startAsyncThreads();
+            startAsyncThreads();
+
+
 
         }
         catch (Exception e){
@@ -259,7 +272,8 @@ public class DimensionTree extends Fragment{
         }
     }
 
-    public void _startAsyncThreads(){
+
+    public void startAsyncThreads(){
         try {
             // start parallel thread to fetch inflated data for leaf levels
             CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,

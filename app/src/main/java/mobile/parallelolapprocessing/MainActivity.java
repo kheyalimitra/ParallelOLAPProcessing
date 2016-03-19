@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 
@@ -38,7 +39,7 @@ import mobile.parallelolapprocessing.Async.ParameterWrapper.MDXUserQueryInput;
 public class MainActivity extends Activity {
     public static HashMap<Integer,String> MeasuresList;
     public static TreeNode DimensionTreeNode;
-    public static HashMap<String, HashMap<Long, Long>> CachedDataCubes = new HashMap();
+    public static WeakHashMap<String, WeakHashMap<Integer, Long>> CachedDataCubes = new WeakHashMap();
 
     //public static Redisson CachedDataCubes1 = Redisson.create();
     //public static ConcurrentMap<String,ConcurrentMap<Long, Long>> cachedDataMap = CachedDataCubes1.getMap("cachedData");

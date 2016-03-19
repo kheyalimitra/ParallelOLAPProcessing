@@ -19,7 +19,8 @@ public class Dimension {
     private  String _populateLeafNode_OperationName="MetaData2";
     private String _rootOperationName = "Dimen";
     /**
-     * this a mapping dictionary for integer key and string hierarchy name. this is going to be used for future reference of any tree node selected by client
+     * this a mapping dictionary for integer key and string hierarchy name. this is going to be
+     * used for future reference of any tree node selected by client
      */
     private HashMap<Integer,String> _treeHiearchyMap= new HashMap<>();
     public static HashMap<Integer,TreeNode> dimensionHiearchyMap= new HashMap<>();
@@ -195,14 +196,18 @@ public class Dimension {
                 }
                 //sets grand child node name
                 TreeNode node = new TreeNode(grandchildName);
+
                 //add each child node to its immediate parent node
                 this._nodeCounter = parentNode.addChildNode(node,this._nodeCounter);
                 // add node name entry to map table
                 this._treeHiearchyMap.put(this._nodeCounter,node.getHierarchyName());
                 this.dimensionHiearchyMap.put(this._nodeCounter,node);
             }
+
+
             // adds every parent node(including its children) to the root node to generate the tree
             this._nodeCounter = rootNode.addChildNode(parentNode,this._nodeCounter );
+
 
             //these two flush each iterator object and points next one in every turn, used better to avoid exception related to modification inside Map entry
             childIterator.remove();

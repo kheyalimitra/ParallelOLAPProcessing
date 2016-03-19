@@ -1,6 +1,10 @@
 package mobile.parallelolapprocessing.UI;
 
+import android.support.annotation.IntegerRes;
+
 import java.util.HashMap;
+import java.util.List;
+import java.util.WeakHashMap;
 
 import DataStructure.TreeNode;
 
@@ -9,14 +13,18 @@ import DataStructure.TreeNode;
  */
 public interface IDimensionMeasureDisplay {
 
-    /**
-     * Get String to display
-     * @param ResultSet
-     * @param DimensionRef
-     * @param MeasuresRef
+    /***
+     * Get Display ui for user query
+     * @param CacheContent
+     * @param UserSelectedKeyCombinations
+     * @param UserSeletedMeasures
+     * @param DimensionReference
+     * @param MeasureReference
      * @return
      */
-    String GetDisplay(HashMap<String,HashMap<String,Long>>  ResultSet,
-                             HashMap<Integer, TreeNode> DimensionRef,
-                             HashMap<Integer,String> MeasuresRef);
+    String GetDisplay(WeakHashMap<String,WeakHashMap<Integer,Long>> CacheContent,
+                      List<String> UserSelectedKeyCombinations,
+                      List<Integer> UserSeletedMeasures,
+                      HashMap<Integer,TreeNode> DimensionReference,
+                      HashMap<Integer,String> MeasureReference);
 }
