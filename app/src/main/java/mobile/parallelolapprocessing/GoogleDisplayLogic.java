@@ -24,6 +24,7 @@ import Processor.QueryProcessor;
 import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
 import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
 import mobile.parallelolapprocessing.UI.DimensionMeasureGoogleHTMLTable;
+import mobile.parallelolapprocessing.UI.DimensionMeasuresGoogleHTMLBarChart;
 import mobile.parallelolapprocessing.UI.IDimensionMeasureDisplay;
 
 /**
@@ -53,9 +54,26 @@ public class GoogleDisplayLogic extends AppCompatActivity {
                 DimensionTree.UserSelectedMeasures,
                 Dimension.dimensionHiearchyMap,
                 MainActivity.MeasuresList);
+        _generateTable(formattedTable);
 
-        _genertateTable(formattedTable);
+        IDimensionMeasureDisplay displayResult2 = new DimensionMeasuresGoogleHTMLBarChart();
+        String formattedBarChart = displayResult2.GetDisplay(MainActivity.CachedDataCubes,
+                DimensionTree.UserSelectedDimensionCombinations,
+                DimensionTree.UserSelectedMeasures,
+                Dimension.dimensionHiearchyMap,
+                MainActivity.MeasuresList);
 
+        _generateBarChart(formattedBarChart);
+        _displayPerformanceInfo(timeStampDisplay, timeStampsDetails, startDisplayTime);
+
+        // flush previous query by user:
+        MDXUserQuery.isComplete =  false;
+        //QueryProcessor.resultSet = new HashMap<>();
+        // start asynchronous threads for inflated values
+
+    }
+
+    private void _displayPerformanceInfo(TextView timeStampDisplay, StringBuilder timeStampsDetails, Long startDisplayTime) {
         Long endDisplayTime =  System.currentTimeMillis()-startDisplayTime;
         timeStampsDetails.append("| Display (ms):" + endDisplayTime.toString());
         if(DimensionMeasureGoogleHTMLTable.DataDisplaySize>=1024) {
@@ -66,71 +84,8 @@ public class GoogleDisplayLogic extends AppCompatActivity {
         {
             timeStampsDetails.append("| Size (b):" + DimensionMeasureGoogleHTMLTable.DataDisplaySize.toString());
         }
+        timeStampsDetails.append(" | % of Hit:" + String.valueOf(QueryProcessor.hitcount*100));
         timeStampDisplay.setText(timeStampsDetails.toString());
-        // takes care of past dimensions selected and if needed flushing cache
-        _recordQueryHistory();
-        // flush previous query by user:
-        MDXUserQuery.isComplete =  false;
-        //QueryProcessor.resultSet = new HashMap<>();
-        // start asynchronous threads for inflated values
-        //new DimensionTree().startAsyncThreads();
-
-    }
-    private void _recordQueryHistory() {
-        // if 0% hit and usr is moving to different direction that previous one flush memory
-        if(!_isCurrentSelectionRelatedToPastDimensions())
-        {
-            if(MainActivity.CachedDataCubes.size()>0) {
-                MainActivity.CachedDataCubes.clear();
-                MDXQProcessor.lastTenSelectedDimensions.clear();
-                CacheProcess.inflatedQueries.clear();
-                CacheProcessUpto1Level.inflatedQueries.clear();
-                System.gc();
-            }
-        }
-        else {
-            // add current selection in exisiting SET
-            _setLastSelectedDimensions();
-        }
-    }
-
-    private  boolean _isCurrentSelectionRelatedToPastDimensions(){
-        if(MDXQProcessor.lastTenSelectedDimensions.size()>0) {
-            for (String dimensions : DimensionTree.UserSelectedDimensionCombinations) {
-                String eachDimension[] = dimensions.split("#");
-                for (String key : eachDimension) {
-                    if (MDXQProcessor.lastTenSelectedDimensions.contains(_findRootParent(key))) {
-                        return true;
-                    }
-
-                }
-            }
-            return false;
-        }
-        else {
-            return true;
-        }
-
-    }
-    private void  _setLastSelectedDimensions(){
-        for (String dimensions : DimensionTree.UserSelectedDimensionCombinations){
-            String eachDimension []= dimensions.split("#");
-            for (String key : eachDimension){
-                MDXQProcessor.lastTenSelectedDimensions.add(_findRootParent(key));
-            }
-        }
-    }
-
-    private Integer _findRootParent(String key) {
-        DataStructure.TreeNode node = Dimension.dimensionHiearchyMap.get(Integer.parseInt(key));
-        Integer parentNodeKey = -1;
-        if(node!=null){
-            while(node.getParent().getReference() != "Dimension"){
-                node = node.getParent();
-            }
-            parentNodeKey = node.getNodeCounter();
-        }
-        return  parentNodeKey;
     }
 
     private List<String> _sortEachCombination(List<String> userSelectedDimensionCombinations) {
@@ -151,34 +106,19 @@ public class GoogleDisplayLogic extends AppCompatActivity {
         return TextUtils.join("#",keyIntArray);
     }
 
-
-    private String[] _getDimensionNamesFromKeys(String combination) {
-        String[] keys =  combination.split("#");
-        String[] dimensionNames = new String[keys.length];
-
-        if(keys.length>0) {
-            for (int i=0;i<keys.length;i++){
-                Integer keyInt = Integer.parseInt(keys[i]);
-
-                TreeNode node =  MDXUserQuery.keyValPairsForDimension.get(keyInt);
-                if(node!=null) {
-                    dimensionNames[i] = node.getReference().toString();
-                }
-            }
-
-        }
-        return dimensionNames;
-
-    }
-
-
-    private void _genertateTable(String formattedTable) {
+    private void _generateTable(String formattedTable) {
         WebView tableView = (WebView) findViewById(R.id.tableView);
         WebSettings webSettings = tableView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         tableView.requestFocusFromTouch();
         tableView.loadDataWithBaseURL("file:///android_asset/", formattedTable, "text/html", "utf-8", null);
     }
-
+    private void _generateBarChart(String formattedTable) {
+        WebView tableView = (WebView) findViewById(R.id.barChartView);
+        WebSettings webSettings = tableView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+        tableView.requestFocusFromTouch();
+        tableView.loadDataWithBaseURL("file:///android_asset/", formattedTable, "text/html", "utf-8", null);
+    }
 
 }

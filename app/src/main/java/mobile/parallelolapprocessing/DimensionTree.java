@@ -144,11 +144,12 @@ public class DimensionTree extends Fragment{
             {
                 @Override
                 public void onClick(View v) {
+                    _resetStaticVariablesRelatedToQuery();
                     String totalAxis = axis.getText().toString();
                     String totalDimensionPerAxis = dimesionPerAxis.getText().toString();
                     // process MXD query here
                     _processUserMDXquerySelection(selectedQuery,totalAxis,totalDimensionPerAxis);
-                    //_startAsyncThreads();
+
 
 
 
@@ -185,14 +186,12 @@ public class DimensionTree extends Fragment{
         MDXUserQuery.keyValPairsForDimension =  new HashMap<>();
         MDXUserQuery.cellOrdinalCombinations =  new ArrayList<>();
         QueryProcessor.resultSet = new HashMap<>();
+        QueryProcessor.hitcount = 0;
         UserSelectedDimensionCombinations = new ArrayList<>();
         UserSelectedMeasures  =  new ArrayList<>();
-
         endTimer =0;
         startTimer=0;
         timeTaken=0;
-        // flushing all existing values which got displayed in last call
-        //new DimensionMeasureGoogleHTMLTable(true);
 
     }
 

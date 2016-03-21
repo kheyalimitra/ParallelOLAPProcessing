@@ -20,10 +20,6 @@ public class MDXQProcessor {
     //this is the cached keys from previous queries
     public  static HashMap<String, Cube> CachedKeys =  new HashMap<>();
     public  Integer hitCount = 0;
-    //compressed keys after sort and merge
-    private List<String> compressedKeys =  new ArrayList<String>();
-    private boolean dataDownloaded; // the data for the current level is downloaded?
-    private boolean leafDataReady;  // the data for the leaf level is downloaded?
     // this list keeps tract of last 10 user selection for dimensions, it will store the root dimension key
     // say Geography , Customer etc so that we can keep tract of user trac ( under which dimension he/she is)
     // will be used when flushing cache
@@ -66,6 +62,7 @@ public class MDXQProcessor {
                 if(!measuresForCachedKeyCombination.containsKey(userMeasureKey)){
                     MeasuresNeedsToFecth.add(userMeasureKey);
                 }
+
             }
         }else{
             return MeasureRequestedByUser;
@@ -83,9 +80,7 @@ public class MDXQProcessor {
                 if (!measuresForCachedKeyCombination.containsKey(userMeasureKey)) {
                     return true;
                 }
-                else {
-                    this.hitCount++;
-                }
+
             }
         }
         return false;

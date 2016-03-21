@@ -27,11 +27,9 @@ public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryIn
     public static HashMap<Integer, String> measureMap;
     public static HashMap<Integer, TreeNode> keyValPairsForDimension;
     public static List<List<String>>cellOrdinalCombinations;
-    private long start=0;
     private Thread inflatedDataDnldThread;
     private MDXUserQueryInput MDXQObj;
     public  static boolean isComplete=false;
-    public static boolean isNewQuery = false;
    public MDXUserQuery(MDXUserQueryInput obj)
    {
        this.MDXQObj = obj;
