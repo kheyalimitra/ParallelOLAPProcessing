@@ -15,8 +15,6 @@ public class DimensionMeasuresGoogleHTMLBarChart implements IDimensionMeasureDis
     @Override
     public String GetDisplay(WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent, List<String> UserSelectedKeyCombinations, List<Integer> UserSeletedMeasures, HashMap<Integer, TreeNode> DimensionReference, HashMap<Integer, String> MeasureReference) {
         try{
-            // flush previous data size:
-            DimensionMeasureGoogleHTMLTable.DataDisplaySize = 8L;
             String text = _generateHTML(CacheContent,UserSelectedKeyCombinations,
                     UserSeletedMeasures,DimensionReference,MeasureReference).toString();
             return text;
@@ -200,7 +198,7 @@ public class DimensionMeasuresGoogleHTMLBarChart implements IDimensionMeasureDis
                     sb.append("-1" + ",");
                 }
             }else{
-                sb.append("-1" + ",");
+                sb.append("-2" + ",");
             }
         }
         StringBuilder newSB = new StringBuilder();

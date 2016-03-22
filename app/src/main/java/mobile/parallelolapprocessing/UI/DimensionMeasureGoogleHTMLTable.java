@@ -223,7 +223,7 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
                     sb.append("-1" + ",");
                 }
             }else{
-                sb.append("-1" + ",");
+                sb.append("-2" + ",");
             }
         }
         StringBuilder newSB = new StringBuilder();
