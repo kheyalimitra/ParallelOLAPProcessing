@@ -39,7 +39,7 @@ import mobile.parallelolapprocessing.Async.ParameterWrapper.MDXUserQueryInput;
 public class MainActivity extends Activity {
     public static HashMap<Integer,String> MeasuresList;
     public static TreeNode DimensionTreeNode;
-    public static WeakHashMap<String, WeakHashMap<Integer, Long>> CachedDataCubes = new WeakHashMap();
+    public static HashMap<String, HashMap<Integer, Long>> CachedDataCubes = new HashMap();
 
     //public static Redisson CachedDataCubes1 = Redisson.create();
     //public static ConcurrentMap<String,ConcurrentMap<Long, Long>> cachedDataMap = CachedDataCubes1.getMap("cachedData");

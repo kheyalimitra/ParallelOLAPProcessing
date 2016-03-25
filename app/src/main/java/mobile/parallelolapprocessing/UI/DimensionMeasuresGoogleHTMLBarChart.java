@@ -4,7 +4,7 @@ import android.util.Log;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.WeakHashMap;
+
 
 import DataStructure.TreeNode;
 
@@ -13,7 +13,7 @@ import DataStructure.TreeNode;
  */
 public class DimensionMeasuresGoogleHTMLBarChart implements IDimensionMeasureDisplay {
     @Override
-    public String GetDisplay(WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent, List<String> UserSelectedKeyCombinations, List<Integer> UserSeletedMeasures, HashMap<Integer, TreeNode> DimensionReference, HashMap<Integer, String> MeasureReference) {
+    public String GetDisplay(HashMap<String, HashMap<Integer, Long>> CacheContent, List<String> UserSelectedKeyCombinations, List<Integer> UserSeletedMeasures, HashMap<Integer, TreeNode> DimensionReference, HashMap<Integer, String> MeasureReference) {
         try{
             String text = _generateHTML(CacheContent,UserSelectedKeyCombinations,
                     UserSeletedMeasures,DimensionReference,MeasureReference).toString();
@@ -24,7 +24,7 @@ public class DimensionMeasuresGoogleHTMLBarChart implements IDimensionMeasureDis
             return ts;
         }
     }
-    private StringBuilder _generateHTML(WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+    private StringBuilder _generateHTML(HashMap<String, HashMap<Integer, Long>> CacheContent,
                                         List<String> UserSelectedKeyCombinations,
                                         List<Integer> UserSeletedMeasures,
                                         HashMap<Integer, TreeNode> DimensionReference,
@@ -45,7 +45,7 @@ public class DimensionMeasuresGoogleHTMLBarChart implements IDimensionMeasureDis
         return sb;
     }
 
-    private StringBuilder _generateDrawBarChartFunction(WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+    private StringBuilder _generateDrawBarChartFunction(HashMap<String, HashMap<Integer, Long>> CacheContent,
                                                      List<String> UserSelectedKeyCombinations,
                                                      List<Integer> UserSeletedMeasures,
                                                      HashMap<Integer, TreeNode> DimensionReference,
@@ -102,7 +102,7 @@ public class DimensionMeasuresGoogleHTMLBarChart implements IDimensionMeasureDis
      * @param DimensionReference
      * @return
      */
-    private StringBuilder _generateRows(WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+    private StringBuilder _generateRows(HashMap<String, HashMap<Integer, Long>> CacheContent,
                                         List<String> UserSelectedKeyCombinations,
                                         List<Integer> UserSeletedMeasures,
                                         HashMap<Integer, TreeNode> DimensionReference){
@@ -131,7 +131,7 @@ public class DimensionMeasuresGoogleHTMLBarChart implements IDimensionMeasureDis
      * @return
      */
     private StringBuilder _generateSingleRow(String KeyCombination,
-                                             WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+                                             HashMap<String, HashMap<Integer, Long>> CacheContent,
                                              List<Integer> UserSeletedMeasures,
                                              HashMap<Integer, TreeNode> DimensionReference){
         StringBuilder sb = new StringBuilder();
@@ -182,13 +182,13 @@ public class DimensionMeasuresGoogleHTMLBarChart implements IDimensionMeasureDis
      * @return
      */
     private StringBuilder _getAllMeasureValues(String KeyCombination,
-                                               WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+                                               HashMap<String, HashMap<Integer, Long>> CacheContent,
                                                List<Integer> UserSeletedMeasures) {
 
         StringBuilder sb = new StringBuilder();
         int i=0;
         for(Integer measureInt:UserSeletedMeasures){
-            WeakHashMap<Integer, Long> keyValPair = CacheContent.get(KeyCombination);
+            HashMap<Integer, Long> keyValPair = CacheContent.get(KeyCombination);
             if(keyValPair!=null) {
                 Long val = keyValPair.get(measureInt);
                 if (val != null) {

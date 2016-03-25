@@ -22,7 +22,7 @@ public interface IDimensionMeasureDisplay {
      * @param MeasureReference
      * @return
      */
-    String GetDisplay(WeakHashMap<String,WeakHashMap<Integer,Long>> CacheContent,
+    String GetDisplay(HashMap<String,HashMap<Integer,Long>> CacheContent,
                       List<String> UserSelectedKeyCombinations,
                       List<Integer> UserSeletedMeasures,
                       HashMap<Integer,TreeNode> DimensionReference,

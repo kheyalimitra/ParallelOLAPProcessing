@@ -81,8 +81,8 @@ public class QueryProcessor {
             //check from cache
             DimensionKeyCombinationAndMeasures nonCachedSelections = mdxQueryProcessorObj.GetAllDimensionAndMeasuresToFetch(generatedKeyCopy,
                                                                                         selectedMeasureMapCopy);
-            List<Integer> nonCachedMeasures = nonCachedSelections.Measures;
-            List<String> nonCachedKeys = nonCachedSelections.KeyCombinations;
+            List<Integer> nonCachedMeasures = new ArrayList<>(nonCachedSelections.Measures);
+            List<String> nonCachedKeys = new ArrayList<>(nonCachedSelections.KeyCombinations);
             // % of hit in cache
             float originalSize = DimensionTree.UserSelectedDimensionCombinations.size()*DimensionTree.UserSelectedMeasures.size();
             float hit = originalSize - (nonCachedKeys.size()*nonCachedMeasures.size());
@@ -114,10 +114,19 @@ public class QueryProcessor {
                 System.gc();
             }
         }
-
+        _addNewEntryinPasDimensionQueryHistory();
     }
 
+    private void _addNewEntryinPasDimensionQueryHistory(){
+        for (String dimensions : DimensionTree.UserSelectedDimensionCombinations) {
+            String eachDimension[] = dimensions.split("#");
+            for (String key : eachDimension) {
+                Integer parentKey = _findRootParent(key);
+                MDXQProcessor.lastTenSelectedDimensions.add(parentKey);
 
+            }
+        }
+    }
     private  boolean _isCurrentSelectionRelatedToPastDimensions(){
         boolean isExists =  false;
         for (String dimensions : DimensionTree.UserSelectedDimensionCombinations) {
@@ -127,13 +136,11 @@ public class QueryProcessor {
                 if(MDXQProcessor.lastTenSelectedDimensions.size()>0) {
                     if (MDXQProcessor.lastTenSelectedDimensions.contains(parentKey)) {
                         isExists = true;
-                    } else {
-                        MDXQProcessor.lastTenSelectedDimensions.add(parentKey);
                     }
                 }
                 else
                 {
-                    MDXQProcessor.lastTenSelectedDimensions.add(parentKey);
+                   // MDXQProcessor.lastTenSelectedDimensions.add(parentKey);
                     isExists = true;
                 }
             }

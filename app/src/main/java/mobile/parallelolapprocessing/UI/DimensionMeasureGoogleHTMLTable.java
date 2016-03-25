@@ -27,7 +27,7 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
      * @param MeasureReference
      * @return
      */
-    public String GetDisplay(WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+    public String GetDisplay(HashMap<String, HashMap<Integer, Long>> CacheContent,
                              List<String> UserSelectedKeyCombinations,
                              List<Integer> UserSeletedMeasures,
                              HashMap<Integer, TreeNode> DimensionReference,
@@ -46,7 +46,7 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
             return ts;
         }
     }
-    private StringBuilder _generateHTML(WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+    private StringBuilder _generateHTML(HashMap<String, HashMap<Integer, Long>> CacheContent,
                                         List<String> UserSelectedKeyCombinations,
                                         List<Integer> UserSeletedMeasures,
                                         HashMap<Integer, TreeNode> DimensionReference,
@@ -66,7 +66,7 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
     private StringBuilder _generateCallFunction(){
         return new StringBuilder("google.setOnLoadCallback(drawTable);\n");
     }
-    private StringBuilder _generateDrawTableFunction(WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+    private StringBuilder _generateDrawTableFunction(HashMap<String, HashMap<Integer, Long>> CacheContent,
                                                      List<String> UserSelectedKeyCombinations,
                                                      List<Integer> UserSeletedMeasures,
                                                      HashMap<Integer, TreeNode> DimensionReference,
@@ -119,7 +119,7 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
      * @param DimensionReference
      * @return
      */
-    private StringBuilder _generateRows(WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+    private StringBuilder _generateRows(HashMap<String, HashMap<Integer, Long>> CacheContent,
                                         List<String> UserSelectedKeyCombinations,
                                         List<Integer> UserSeletedMeasures,
                                         HashMap<Integer, TreeNode> DimensionReference){
@@ -153,7 +153,7 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
      * @return
      */
     private StringBuilder _generateSingleRow(String KeyCombination,
-                                             WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+                                             HashMap<String, HashMap<Integer, Long>> CacheContent,
                                              List<Integer> UserSeletedMeasures,
                                              HashMap<Integer, TreeNode> DimensionReference){
     StringBuilder sb = new StringBuilder();
@@ -205,13 +205,13 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
      * @return
      */
     private StringBuilder _getAllMeasureValues(String KeyCombination,
-                                                WeakHashMap<String, WeakHashMap<Integer, Long>> CacheContent,
+                                                HashMap<String, HashMap<Integer, Long>> CacheContent,
                                                 List<Integer> UserSeletedMeasures) {
 
         StringBuilder sb = new StringBuilder();
         int i=0;
         for(Integer measureInt:UserSeletedMeasures){
-            WeakHashMap<Integer, Long> keyValPair = CacheContent.get(KeyCombination);
+            HashMap<Integer, Long> keyValPair = CacheContent.get(KeyCombination);
             if(keyValPair!=null) {
                 // calculating total size of data which is displayed (approximately)
                 DataDisplaySize *= 2;// [cellordinal, value] pair and both are Long
