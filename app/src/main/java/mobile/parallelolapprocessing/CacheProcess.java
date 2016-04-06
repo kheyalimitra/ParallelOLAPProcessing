@@ -164,22 +164,22 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//comment this wh
                 List<List<Long>> cubeInflated = c.GetCubeData(CacheProcess.inflatedQueries.get(CacheProcess.inflatedQueries.size()-1));
 
                 mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated,false);// assuming only 1 query entry
-                Log.d("Inflated Query 1:", "Time taken to download and populate " + String.valueOf(System.currentTimeMillis()));
+                //Log.d("Inflated Query 1:", "Time taken to download and populate " + String.valueOf(System.currentTimeMillis()));
 
             }
         }
         catch(Exception e) {
             String ex = e.getMessage();
         }
-        finally {// for 3 thread test
             // start another thread to fetch siblings data
+        /*finally {// for 3 thread test
             Log.d("Inflated Query 2:", "Time taken to start job " + String.valueOf( System.currentTimeMillis()));
             CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                     MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
             cacheParentLevelObj.run();
             Log.d("Inflated Query 2:", "Time taken to finish job " + String.valueOf(System.currentTimeMillis()));
             //cacheParentLevelObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        }
+        }*/
     }
 
     @Override

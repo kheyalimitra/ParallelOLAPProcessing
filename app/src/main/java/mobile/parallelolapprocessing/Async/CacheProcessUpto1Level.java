@@ -18,7 +18,7 @@ import mobile.parallelolapprocessing.MainActivity;
 /**
  * Created by jayma on 2/28/2016.
  */
-public class CacheProcessUpto1Level {//extends AsyncTask<Void,Void,String> { //comment this when use 2 thread or 3 thread test//extends AsyncTask<Void,Void,String> {
+public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> { //comment this when use 2 thread or 3 thread test//extends AsyncTask<Void,Void,String> {
     public List<List<List<Integer>>> allAxisDetails;
     public List<Integer> selectedMeasures;
     public HashMap<Integer, String> measureMap;
@@ -152,13 +152,13 @@ public class CacheProcessUpto1Level {//extends AsyncTask<Void,Void,String> { //c
     }
 
 
-    //@Override
+    @Override
     protected String doInBackground(Void... params) {
 
         //start = System.currentTimeMillis();
        // List<Long> timing = new ArrayList<>();
         //timing.add(start);
-        Log.d("Inflated Query 2:", "Time taken to start job " + String.valueOf( start));
+        Log.d("Inflated Query 2:", "Time taken to start job " + String.valueOf( System.currentTimeMillis()));
         this.run();
         long end = System.currentTimeMillis();
         Log.d("Inflated Query 2:", "Time taken to finish job " + String.valueOf(end));

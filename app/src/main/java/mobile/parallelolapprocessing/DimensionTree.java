@@ -277,7 +277,7 @@ public class DimensionTree extends Fragment{
             // start another thread to fetch siblings data
             CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                     MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
-            //cacheParentLevelObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            cacheParentLevelObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             //cacheParentLevelObj.run();
             //Log.d("Inflated Query Call:", "Time taken to end both caching job " + String.valueOf(System.currentTimeMillis()));
 
@@ -308,10 +308,11 @@ public class DimensionTree extends Fragment{
             long timeVal1 = System.currentTimeMillis();
             timeInterval.add(timeVal1);
             MainActivity.ThreadProcesshingDetails.put("Display_Query", timeInterval);
-            Log.d("Display Query:", "Google chart-Table display starts: " + String.valueOf( timeVal1));
+            Log.d("Display Query:", "Google chart-Table display starts: " + String.valueOf(timeVal1));
 
             Intent intent = new Intent(MainActivity.MainContext, GoogleDisplayLogic.class);
             DimensionTree.this.startActivity(intent);
+            //startAsyncThreads();
         } catch (Exception e) {
             String s = e.getMessage();
         }

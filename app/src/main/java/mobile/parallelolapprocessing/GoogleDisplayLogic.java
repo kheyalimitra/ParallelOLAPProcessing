@@ -1,6 +1,7 @@
 package mobile.parallelolapprocessing;
 
 import android.app.Fragment;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
@@ -31,6 +32,7 @@ import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
 import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
 import mobile.parallelolapprocessing.UI.DimensionMeasureGoogleHTMLTable;
 import mobile.parallelolapprocessing.UI.DimensionMeasuresGoogleHTMLBarChart;
+import mobile.parallelolapprocessing.UI.DisplayThread;
 import mobile.parallelolapprocessing.UI.IDimensionMeasureDisplay;
 
 /**
@@ -38,47 +40,50 @@ import mobile.parallelolapprocessing.UI.IDimensionMeasureDisplay;
  */
 public class GoogleDisplayLogic extends AppCompatActivity {
     public final static String View_PARAM = "fragment";
-
+    public  static String formattedTable = null;
+    public static String formattedBarChart =  null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d("Display Query:", "Google chart-Table display table-bar chart call: " + String.valueOf(System.currentTimeMillis()));
 
         setContentView(R.layout.googledisplaycomponent);
-        //////////.View v = (View) findViewById(R.layout.display);
-        //EditText Dimsize = (EditText)findViewById();
+
 
         final TextView timeStampDisplay = (TextView)findViewById(R.id.timeToDownload);
 
         Long timeTaken = DimensionTree.timeTaken;
         StringBuilder timeStampsDetails =new StringBuilder();
-        timeStampsDetails.append("Data Fetch (ms): " + timeTaken.toString() );
-    
-        //String s = _displayResultInTable();
-        Long startDisplayTime =  System.currentTimeMillis();
-        DimensionTree.UserSelectedDimensionCombinations = this._sortEachCombination(DimensionTree.UserSelectedDimensionCombinations);
-        IDimensionMeasureDisplay displayResult = new DimensionMeasureGoogleHTMLTable();
-        String formattedTable = displayResult.GetDisplay(MainActivity.CachedDataCubes,
-                DimensionTree.UserSelectedDimensionCombinations,
-                DimensionTree.UserSelectedMeasures,
-                Dimension.dimensionHiearchyMap,
-                MainActivity.MeasuresList);
-        _generateTable(formattedTable);
+        timeStampsDetails.append("Data Fetch (ms): " + timeTaken.toString());
+        DisplayThread dth =  new DisplayThread();
+        long startDisplayTime = System.currentTimeMillis();
+        //dth.run();
 
-        IDimensionMeasureDisplay displayResult2 = new DimensionMeasuresGoogleHTMLBarChart();
-        String formattedBarChart = displayResult2.GetDisplay(MainActivity.CachedDataCubes,
-                DimensionTree.UserSelectedDimensionCombinations,
-                DimensionTree.UserSelectedMeasures,
-                Dimension.dimensionHiearchyMap,
-                MainActivity.MeasuresList);
-
-        _generateBarChart(formattedBarChart);
+        dth.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        long wait = (long) 0.1;
+        while(DisplayThread.isFilled == false){
+            try {
+                Thread.sleep(wait);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        //formattedTable =
+        if(formattedTable!= null) {
+            _generateTable(formattedTable);
+        }
+        if(formattedBarChart != null) {
+            _generateBarChart(formattedBarChart);
+        }
         _displayPerformanceInfo(timeStampDisplay, timeStampsDetails, startDisplayTime);
 
         Log.d("Display Query:", "Google chart-Table display ends: " + String.valueOf( System.currentTimeMillis()));
 
         // flush previous query by user:
         MDXUserQuery.isComplete =  false;
+        formattedBarChart = null;
+        formattedTable =  null;
+        DisplayThread.isFilled = false;
         DimensionTree dt = new DimensionTree();
         dt.startAsyncThreads();
 
@@ -99,23 +104,6 @@ public class GoogleDisplayLogic extends AppCompatActivity {
         timeStampDisplay.setText(timeStampsDetails.toString());
     }
 
-    private List<String> _sortEachCombination(List<String> userSelectedDimensionCombinations) {
-        for(int i=0;i<userSelectedDimensionCombinations.size();i++){
-            userSelectedDimensionCombinations.set(i, this._sortKey(userSelectedDimensionCombinations.get(i)));
-        }
-        return userSelectedDimensionCombinations;
-    }
-
-    private String _sortKey(String keyCombination) {
-        String[] keyArray = keyCombination.split("#");
-        Integer[] keyIntArray = new Integer[keyArray.length];
-        for(int i=0;i<keyIntArray.length;i++){
-            keyIntArray[i] = Integer.parseInt(keyArray[i]);
-        }
-
-        Arrays.sort(keyIntArray);
-        return TextUtils.join("#",keyIntArray);
-    }
 
     private void _generateTable(String formattedTable) {
         WebView tableView = (WebView) findViewById(R.id.tableView);
