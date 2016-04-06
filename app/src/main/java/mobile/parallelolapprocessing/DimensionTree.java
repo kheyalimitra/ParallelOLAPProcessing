@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -27,29 +26,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.unnamed.b.atv.model.TreeNode;
 import com.unnamed.b.atv.view.AndroidTreeView;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-
-import DataRetrieval.Dimension;
-import MDXQueryProcessor.MDXQProcessor;
 import Processor.QueryProcessor;
 import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
-import mobile.parallelolapprocessing.Async.Call.DimensionHierarchy;
 import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
-import mobile.parallelolapprocessing.Async.Call.RootDimension;
 import mobile.parallelolapprocessing.Async.IconTreeItem;
 import mobile.parallelolapprocessing.Async.ParameterWrapper.MDXUserQueryInput;
-import mobile.parallelolapprocessing.UI.DimensionMeasureGoogleHTMLTable;
-import mobile.parallelolapprocessing.UI.IDimensionMeasureDisplay;
+
 
 public class DimensionTree extends Fragment{
 
@@ -147,10 +134,10 @@ public class DimensionTree extends Fragment{
                     _resetStaticVariablesRelatedToQuery();
                     String totalAxis = axis.getText().toString();
                     String totalDimensionPerAxis = dimesionPerAxis.getText().toString();
+                    long start = System.currentTimeMillis();
+                    Log.d("Original Query", "Branching out new thread time start: " + String.valueOf(start));
                     // process MXD query here
-                    _processUserMDXquerySelection(selectedQuery,totalAxis,totalDimensionPerAxis);
-
-
+                    _processUserMDXquerySelection(selectedQuery, totalAxis, totalDimensionPerAxis);
 
 
                 }
@@ -180,6 +167,7 @@ public class DimensionTree extends Fragment{
     }
 
     private void _resetStaticVariablesRelatedToQuery() {
+        MainActivity.ThreadProcesshingDetails =  new HashMap<>();
         MDXUserQuery.allAxisDetails =  new ArrayList<>();
         MDXUserQuery.selectedMeasures =  new ArrayList<>();
         MDXUserQuery.measureMap =  new HashMap<>();
@@ -259,10 +247,10 @@ public class DimensionTree extends Fragment{
 
             timeTaken = this.endTimer - this.startTimer;
             _populateListView(selectedQuery, this.endTimer - this.startTimer);
-
-             // start asynchronous thread
-            startAsyncThreads();
-
+            // start asynchronous thread using only 2 thread frame
+            //MDXObj = new MDXUserQuery(mdxInputObj,true);
+           // MDXObj.start();
+            //startAsyncThreads();
 
 
         }
@@ -274,17 +262,24 @@ public class DimensionTree extends Fragment{
 
     public void startAsyncThreads(){
         try {
+            //long start =System.currentTimeMillis();
+            //List<Long> timing =  new ArrayList<>();
+            //timing.add(start);
+            //MainActivity.ThreadProcesshingDetails.put("Inflated_QueryCall:Async", timing);
+            //Log.d("Inflated Query Call :", "Time taken to start job " + String.valueOf(System.currentTimeMillis()));
+
             // start parallel thread to fetch inflated data for leaf levels
             CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                     MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
 
             cache.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-
+            //cache.run();
             // start another thread to fetch siblings data
             CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                     MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
-
-            cacheParentLevelObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            //cacheParentLevelObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            //cacheParentLevelObj.run();
+            //Log.d("Inflated Query Call:", "Time taken to end both caching job " + String.valueOf(System.currentTimeMillis()));
 
         }
         catch(Exception e)
@@ -309,6 +304,12 @@ public class DimensionTree extends Fragment{
 
         }
         try {
+            List<Long> timeInterval =  new ArrayList<>();
+            long timeVal1 = System.currentTimeMillis();
+            timeInterval.add(timeVal1);
+            MainActivity.ThreadProcesshingDetails.put("Display_Query", timeInterval);
+            Log.d("Display Query:", "Google chart-Table display starts: " + String.valueOf( timeVal1));
+
             Intent intent = new Intent(MainActivity.MainContext, GoogleDisplayLogic.class);
             DimensionTree.this.startActivity(intent);
         } catch (Exception e) {
@@ -489,8 +490,11 @@ public class DimensionTree extends Fragment{
         List<TreeNode> children = node.getChildren();
         if(children.size()==0 && node.getLevel()==3) {
             MainActivity mainObj = new MainActivity();
+            List<Long> threadTime = new ArrayList<>();
+            threadTime.add(System.currentTimeMillis());
             mainObj.fetchHierarchyRecordsFromServer(param);
-            //_fetchHierarchyRecordsFromServer(param);
+            threadTime.add(System.currentTimeMillis());
+            MainActivity.ThreadProcesshingDetails.put("Hierarchy_Sync",threadTime);
             List<DataStructure.TreeNode> AdventureWorksHierarchyDetails = HierarchyNode.getChildren();
             try {
                 _iterateThroughLeaves(node, AdventureWorksHierarchyDetails);

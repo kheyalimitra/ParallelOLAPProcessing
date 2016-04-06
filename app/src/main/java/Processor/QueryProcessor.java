@@ -1,11 +1,13 @@
 package Processor;
 
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import DataRetrieval.*;
 import DataStructure.TreeNode;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import MDXQueryProcessor.*;
 import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
@@ -76,6 +78,10 @@ public class QueryProcessor {
             MDXUserQuery.allAxisDetails = new MDXQProcessor().GetAxisDetails(
                     new ArrayList<>(selectedMeasureMap.keySet()),
                     generatedKeys);
+            List<Long> timing = new ArrayList<>();
+            timing.add(System.currentTimeMillis());
+            MainActivity.ThreadProcesshingDetails.put("Original_Query", timing);
+            Log.d("Original Query","After generating the combination: " + String.valueOf(System.currentTimeMillis()));
             //Start timer
             DimensionTree.startTimer = System.currentTimeMillis();
             //check from cache

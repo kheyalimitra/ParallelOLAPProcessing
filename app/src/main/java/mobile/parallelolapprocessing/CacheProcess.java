@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import DataRetrieval.Cube;
 import DataRetrieval.Dimension;
@@ -23,11 +24,12 @@ import DataStructure.TreeNode;
 import MDXQueryProcessor.MDXQProcessor;
 import Processor.QueryProcessor;
 import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
+import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
 
 /**
  * Created by KheyaliMitra on 1/31/2016.
  */
-public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runnable {// this is for passing parameters in doInBackground method
+public class CacheProcess extends AsyncTask<Void,Void,String> {//comment this when use 2 thread or 3 thread test//implements Runnable {// this is for passing parameters in doInBackground method
     public List<List<List<Integer>>> allAxisDetails;
     public List<Integer> selectedMeasures;
     public HashMap<Integer, String> measureMap;
@@ -137,7 +139,7 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
     }
 
 
-    private void run() {
+    public void run() {
         try {
             start = System.currentTimeMillis();
 
@@ -154,6 +156,7 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
 
             List<String>  queryListForChildren  = mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
                     keyValPairsForDimension, true,false);
+
             if(!CacheProcessUpto1Level.inflatedQueries.contains(queryListForChildren.get(0)) && !CacheProcess.inflatedQueries.contains(queryListForChildren.get(0)))
             {
                 CacheProcess.inflatedQueries.add(queryListForChildren.get(0));
@@ -161,17 +164,35 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
                 List<List<Long>> cubeInflated = c.GetCubeData(CacheProcess.inflatedQueries.get(CacheProcess.inflatedQueries.size()-1));
 
                 mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated,false);// assuming only 1 query entry
+                Log.d("Inflated Query 1:", "Time taken to download and populate " + String.valueOf(System.currentTimeMillis()));
+
             }
         }
         catch(Exception e) {
             String ex = e.getMessage();
         }
+        finally {// for 3 thread test
+            // start another thread to fetch siblings data
+            Log.d("Inflated Query 2:", "Time taken to start job " + String.valueOf( System.currentTimeMillis()));
+            CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+            cacheParentLevelObj.run();
+            Log.d("Inflated Query 2:", "Time taken to finish job " + String.valueOf(System.currentTimeMillis()));
+            //cacheParentLevelObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
     }
 
     @Override
     protected String doInBackground(Void... params) {
+        //long start = System.currentTimeMillis();
+        //List<Long> timing = new ArrayList<>();
+        //timing.add(start);
+        Log.d("Inflated Query 1:", "Time taken to start job " + String.valueOf(System.currentTimeMillis()));
         this.run();
-
+        //long end = System.currentTimeMillis();
+        //timing.add(end);
+        Log.d("Inflated Query 1:", "Time taken to finish job " + String.valueOf(System.currentTimeMillis()));
+        //MainActivity.ThreadProcesshingDetails.put("Inflated_Query_1:Async",timing);
         return "Success";
     }
 }

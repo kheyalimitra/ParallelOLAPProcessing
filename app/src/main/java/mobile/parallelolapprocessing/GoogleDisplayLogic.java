@@ -7,15 +7,21 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 
+import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import DataRetrieval.Dimension;
 import DataStructure.TreeNode;
@@ -36,15 +42,18 @@ public class GoogleDisplayLogic extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("Display Query:", "Google chart-Table display table-bar chart call: " + String.valueOf(System.currentTimeMillis()));
 
         setContentView(R.layout.googledisplaycomponent);
         //////////.View v = (View) findViewById(R.layout.display);
         //EditText Dimsize = (EditText)findViewById();
-        TextView timeStampDisplay = (TextView)findViewById(R.id.timeToDownload);
+
+        final TextView timeStampDisplay = (TextView)findViewById(R.id.timeToDownload);
+
         Long timeTaken = DimensionTree.timeTaken;
         StringBuilder timeStampsDetails =new StringBuilder();
         timeStampsDetails.append("Data Fetch (ms): " + timeTaken.toString() );
-
+    
         //String s = _displayResultInTable();
         Long startDisplayTime =  System.currentTimeMillis();
         DimensionTree.UserSelectedDimensionCombinations = this._sortEachCombination(DimensionTree.UserSelectedDimensionCombinations);
@@ -66,10 +75,12 @@ public class GoogleDisplayLogic extends AppCompatActivity {
         _generateBarChart(formattedBarChart);
         _displayPerformanceInfo(timeStampDisplay, timeStampsDetails, startDisplayTime);
 
+        Log.d("Display Query:", "Google chart-Table display ends: " + String.valueOf( System.currentTimeMillis()));
+
         // flush previous query by user:
         MDXUserQuery.isComplete =  false;
-        //QueryProcessor.resultSet = new HashMap<>();
-        // start asynchronous threads for inflated values
+        DimensionTree dt = new DimensionTree();
+        dt.startAsyncThreads();
 
     }
 

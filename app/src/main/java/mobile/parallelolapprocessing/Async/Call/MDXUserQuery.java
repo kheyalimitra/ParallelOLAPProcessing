@@ -10,6 +10,8 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import DataStructure.TreeNode;
 import Processor.QueryProcessor;
 import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
@@ -30,27 +32,42 @@ public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryIn
     private Thread inflatedDataDnldThread;
     private MDXUserQueryInput MDXQObj;
     public  static boolean isComplete=false;
+    private boolean callInflatedThread =false;
    public MDXUserQuery(MDXUserQueryInput obj)
    {
        this.MDXQObj = obj;
    }
+    // will be used only when we need to test this using 2 threads
+    public MDXUserQuery(MDXUserQueryInput obj,boolean isStartInflatedThread)
+    {
+        this.MDXQObj = obj;
+        this.callInflatedThread = isStartInflatedThread;
+    }
 
-   @Override
+    @Override
     public void run() {
-        QueryProcessor qp = new QueryProcessor();
-        try {
-            //Standard priority of the most important display threads, for compositing the screen and retrieving input events.
-            //Process.setThreadPriority(Process.THREAD_PRIORITY_MORE_FAVORABLE);
-            //new DimensionTree()._startAsyncThreads();
-             qp.GetUserRequestedData(MDXQObj.entryPerDimension,MDXQObj.rootDimensionTree,MDXQObj.DimensionInput,MDXQObj.measuresObj,
-                    MDXQObj.measureMap,MDXQObj.measureInput);
-            isComplete = true;
+       if(callInflatedThread){
+           CallSynchronousThread();
+       }
+       else {
+           QueryProcessor qp = new QueryProcessor();
+           try {
+               //Standard priority of the most important display threads, for compositing the screen and retrieving input events.
+               //Process.setThreadPriority(Process.THREAD_PRIORITY_MORE_FAVORABLE);
+               //new DimensionTree()._startAsyncThreads();
+               qp.GetUserRequestedData(MDXQObj.entryPerDimension, MDXQObj.rootDimensionTree, MDXQObj.DimensionInput, MDXQObj.measuresObj,
+                       MDXQObj.measureMap, MDXQObj.measureInput);
+               isComplete = true;
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            isComplete = false;
+               Log.d("Original Query", "Download data and fill in memory: " + String.valueOf(System.currentTimeMillis()));
 
-        }
+
+           } catch (Exception e) {
+               e.printStackTrace();
+               isComplete = false;
+
+           }
+       }
 
     }
 
@@ -63,7 +80,11 @@ public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryIn
 
         }
     }
-
+    // this method will be called only when we need to test with only 2 threads
+public void CallSynchronousThread(){
+    DimensionTree dt = new DimensionTree();
+    dt.startAsyncThreads();
+}
    // @Override
     protected Boolean doInBackground(MDXUserQueryInput... params) {
         this.run();

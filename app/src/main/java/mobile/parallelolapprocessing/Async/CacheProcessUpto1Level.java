@@ -6,17 +6,19 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import DataRetrieval.Cube;
 import DataStructure.TreeNode;
 import MDXQueryProcessor.MDXQProcessor;
 
 import mobile.parallelolapprocessing.CacheProcess;
+import mobile.parallelolapprocessing.MainActivity;
 
 /**
  * Created by jayma on 2/28/2016.
  */
-public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> {
+public class CacheProcessUpto1Level {//extends AsyncTask<Void,Void,String> { //comment this when use 2 thread or 3 thread test//extends AsyncTask<Void,Void,String> {
     public List<List<List<Integer>>> allAxisDetails;
     public List<Integer> selectedMeasures;
     public HashMap<Integer, String> measureMap;
@@ -62,7 +64,7 @@ public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> {
         }
         return allLeaves;
     }
-    private void run() {
+    public void run() {
         try {
 
             Cube c = new Cube(olapServerURL);
@@ -89,6 +91,7 @@ public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> {
         catch(Exception e) {
             String ex = e.getMessage();
         }
+
     }
     private List<List<HashMap<Integer,TreeNode>>> _getSiblingsPerAxis(HashMap<Integer, TreeNode> keyValPairsForDimension,
                                                                List<List<Integer>> allAxisDetails) {
@@ -149,9 +152,18 @@ public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> {
     }
 
 
-    @Override
+    //@Override
     protected String doInBackground(Void... params) {
+
+        //start = System.currentTimeMillis();
+       // List<Long> timing = new ArrayList<>();
+        //timing.add(start);
+        Log.d("Inflated Query 2:", "Time taken to start job " + String.valueOf( start));
         this.run();
+        long end = System.currentTimeMillis();
+        Log.d("Inflated Query 2:", "Time taken to finish job " + String.valueOf(end));
+        //timing.add(end);
+       //MainActivity.ThreadProcesshingDetails.put("Inflated_Query_2_Async",timing);
 
         return "Success";
     }

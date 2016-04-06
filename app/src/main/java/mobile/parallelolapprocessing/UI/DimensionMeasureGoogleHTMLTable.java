@@ -206,11 +206,14 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
      */
     private StringBuilder _getAllMeasureValues(String KeyCombination,
                                                 HashMap<String, HashMap<Integer, Long>> CacheContent,
-                                                List<Integer> UserSeletedMeasures) {
+                                                List<Integer> UserSeletedMeasures) throws InterruptedException {
 
         StringBuilder sb = new StringBuilder();
         int i=0;
         for(Integer measureInt:UserSeletedMeasures){
+            while(CacheContent.get(KeyCombination)== null) {
+                Thread.sleep(1);
+            }
             HashMap<Integer, Long> keyValPair = CacheContent.get(KeyCombination);
             if(keyValPair!=null) {
                 // calculating total size of data which is displayed (approximately)
@@ -223,7 +226,7 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
                     sb.append("-1" + ",");
                 }
             }else{
-                sb.append("-2" + ",");
+               sb.append("-2" + ",");
             }
         }
         StringBuilder newSB = new StringBuilder();

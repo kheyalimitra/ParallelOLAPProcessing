@@ -53,9 +53,9 @@ public class Cube{
         Object obj = paramValue;
         param.put(paramName,obj);
         String result = sp.GetJSONString(this._olapServiceURL,operationName,param);
-        long endtime = System.currentTimeMillis() -startTime;
-        if (!Log.isLoggable("MDXQueryDownload", Log.VERBOSE))
-            Log.v("MyApplicationTag", "time to download JSON from server: "+ endtime);
+        //long endtime = System.currentTimeMillis() -startTime;
+        //if (!Log.isLoggable("MDXQueryDownload", Log.VERBOSE))
+        //    Log.v("MyApplicationTag", "time to download JSON from server: "+ endtime);
 
         //create JSON parser object
         JSONParser parser = new JSONParser();

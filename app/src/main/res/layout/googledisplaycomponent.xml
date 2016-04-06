@@ -16,11 +16,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/tableView"
-        android:layout_weight="0.34" />
+        android:layout_weight="0.45" />
+
     <WebView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/barChartView"
-        android:layout_weight="0.60" />
+        android:layout_weight="0.45" />
 
 </LinearLayout>

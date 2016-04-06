@@ -40,9 +40,7 @@ public class MainActivity extends Activity {
     public static HashMap<Integer,String> MeasuresList;
     public static TreeNode DimensionTreeNode;
     public static HashMap<String, HashMap<Integer, Long>> CachedDataCubes = new HashMap();
-
-    //public static Redisson CachedDataCubes1 = Redisson.create();
-    //public static ConcurrentMap<String,ConcurrentMap<Long, Long>> cachedDataMap = CachedDataCubes1.getMap("cachedData");
+    public static HashMap<String,List<Long>> ThreadProcesshingDetails = new HashMap<>();
     public static Context MainContext;
     //Class for
     private class SimpleArrayAdapter extends ArrayAdapter<String> {
@@ -107,6 +105,11 @@ public class MainActivity extends Activity {
 }
 
     public void getDimensionAndMeasures() throws ExecutionException, InterruptedException {
+        MainActivity.ThreadProcesshingDetails =  new HashMap<>();
+        List<Long> threadProcessDimen = new ArrayList<>();
+        List<Long> threadProcessMeasure = new ArrayList<>();
+        threadProcessDimen.add(System.currentTimeMillis());
+        threadProcessMeasure.add(System.currentTimeMillis());
         RootDimension rootDimObj= new RootDimension();
         Measures measObj =  new Measures();
         try {
@@ -121,6 +124,8 @@ public class MainActivity extends Activity {
         }
         finally {
             rootDimObj =null;
+            threadProcessDimen.add(System.currentTimeMillis());
+            ThreadProcesshingDetails.put("Main_Dimen_Sync", threadProcessDimen);
         }
         try{
             measObj.join();
@@ -134,7 +139,10 @@ public class MainActivity extends Activity {
         }
         finally{
             measObj =null;
+            threadProcessMeasure.add(System.currentTimeMillis());
+            ThreadProcesshingDetails.put("Main_Measure_Sync", threadProcessMeasure);
         }
+
     }
     public com.unnamed.b.atv.model.TreeNode PopulateTreeHierarchy() {
         com.unnamed.b.atv.model.TreeNode dRoot = new com.unnamed.b.atv.model.TreeNode("Dimension/Hierarchy:");
