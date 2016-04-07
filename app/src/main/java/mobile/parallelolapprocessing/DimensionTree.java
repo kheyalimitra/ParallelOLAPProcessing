@@ -280,6 +280,11 @@ public class DimensionTree extends Fragment{
             cacheParentLevelObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             //cacheParentLevelObj.run();
             //Log.d("Inflated Query Call:", "Time taken to end both caching job " + String.valueOf(System.currentTimeMillis()));
+            // thread 3:
+
+            Thhread4 th4Obj = new Thhread4(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+            th4Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
         }
         catch(Exception e)
