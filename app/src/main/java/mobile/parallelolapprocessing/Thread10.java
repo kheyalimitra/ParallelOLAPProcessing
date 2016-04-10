@@ -15,7 +15,7 @@ import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
 /**
  * Created by jayma on 4/7/2016.
  */
-public class Thhread4 extends AsyncTask {
+public class Thread10 extends AsyncTask {
     public List<List<List<Integer>>> allAxisDetails;
     public List<Integer> selectedMeasures;
     public HashMap<Integer, String> measureMap;
@@ -26,8 +26,8 @@ public class Thhread4 extends AsyncTask {
     public static List<String> inflatedQueries;
     private long start=0;
     List<List<TreeNode>> parentEntiresPerAxis;
-    public Thhread4(List<List<List<Integer>>> allAxisDetails, List<Integer> selectedMeasures, HashMap<Integer, String> measureMap,
-                                  HashMap<Integer, TreeNode> keyValPairsForDimension, List<List<String>> cellOrdinalCombinations, String olapURL)
+    public Thread10(List<List<List<Integer>>> allAxisDetails, List<Integer> selectedMeasures, HashMap<Integer, String> measureMap,
+                   HashMap<Integer, TreeNode> keyValPairsForDimension, List<List<String>> cellOrdinalCombinations, String olapURL)
     {
         this.allAxisDetails = allAxisDetails;
         this.selectedMeasures =selectedMeasures;
@@ -36,11 +36,11 @@ public class Thhread4 extends AsyncTask {
         this.cellOrdinalCombinations = cellOrdinalCombinations;
         this.olapServerURL = olapURL;
     }
-    public Thhread4()
+    public Thread10()
     {
-        if(Thhread4.inflatedQueries == null)
+        if(Thread10.inflatedQueries == null)
         {
-            Thhread4.inflatedQueries = new ArrayList<>();
+            Thread10.inflatedQueries = new ArrayList<>();
         }
         if(CacheProcess.inflatedQueries == null)
         {
@@ -51,10 +51,10 @@ public class Thhread4 extends AsyncTask {
 
     @Override
     protected Object doInBackground(Object[] params) {
-        Log.d("Inflated Query 3:", "Time taken to start job " + String.valueOf(System.currentTimeMillis()));
+        Log.d("Inflated Query 9:", "Time taken to start job " + String.valueOf(System.currentTimeMillis()));
         this.run();
         long end = System.currentTimeMillis();
-        Log.d("Inflated Query 3:", "Time taken to finish job " + String.valueOf(end));
+        Log.d("Inflated Query 9:", "Time taken to finish job " + String.valueOf(end));
 
 
         return "Success";
@@ -79,7 +79,7 @@ public class Thhread4 extends AsyncTask {
             Cube c = new Cube(olapServerURL);
             MDXQProcessor mdxQ = new MDXQProcessor();
             CacheProcess cpObj = new CacheProcess();
-            Thhread4 th4  = new Thhread4();
+            Thread10 th10 = new Thread10();
             List<List<HashMap<Integer, TreeNode>>> allLeaves = _getSiblingsPerAxis(keyValPairsForDimension, allAxisDetails.get(0));
             if(allLeaves.size()>0) {
                 List<List<List<Integer>>> newAxisDetails = cpObj.generateNewAxisDetails(allLeaves, allAxisDetails);
@@ -91,10 +91,11 @@ public class Thhread4 extends AsyncTask {
 
                 List<String>  queryListForSiblings = mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
                         keyValPairsForDimension, true, true);
-                if(!Thhread4.inflatedQueries.contains(queryListForSiblings.get(0)) && !CacheProcess.inflatedQueries.contains(queryListForSiblings.get(0))) {
-                    Thhread4.inflatedQueries.add(queryListForSiblings.get(0));
-                    String query = "select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Geography].[Geography].[All Geographies]},1,LEAVES) on axis(1) ,DESCENDANTS({[Employee].[Employee Department].[All Employees]},2,LEAVES) on axis(2) from [Adventure Works]";
+                if(!Thread10.inflatedQueries.contains(queryListForSiblings.get(0)) ) {
+                    Thread10.inflatedQueries.add(queryListForSiblings.get(0));
+                    String query =  "select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Geography].[Geography].[All Geographies].[Germany]},2,LEAVES) on axis(1) ,DESCENDANTS({[Employee].[Employee Department].[All Employees]},1,LEAVES) on axis(2) from [Adventure Works]";
 
+                    //"select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Geography].[Geography].[All Geographies].[Canada]},3,LEAVES) on axis(1) ,DESCENDANTS({[Employee].[Employee Department].[All Employees]},3,LEAVES) on axis(2) from [Adventure Works]";
                     //String query// = "select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Employee].[Employee Department].[All Employees].[Document Control],[Employee].[Employee Department].[All Employees].[Engineering],[Employee].[Employee Department].[All Employees].[Executive],[Employee].[Employee Department].[All Employees].[Facilities and Maintenance],[Employee].[Employee Department].[All Employees].[Finance],[Employee].[Employee Department].[All Employees].[Human Resources],[Employee].[Employee Department].[All Employees].[Information Services],[Employee].[Employee Department].[All Employees].[Marketing]},2,LEAVES) on axis(1) ,DESCENDANTS({[Geography].[Geography].[All Geographies].[Australia],[Geography].[Geography].[All Geographies].[Canada],[Geography].[Geography].[All Geographies].[France],[Geography].[Geography].[All Geographies].[United Kingdom],[Geography].[Geography].[All Geographies].[United States]},3,LEAVES) on axis(2) from [Adventure Works]";
                     List<List<Long>> cubeInflated = c.GetCubeData(query);// since last entry is the current one
                     mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated,false);// assuming only 1 query entry
@@ -118,8 +119,8 @@ public class Thhread4 extends AsyncTask {
 
                 TreeNode node = keyValPairsForDimension.get(key);
                 if (node != null) {
-                       node = node.getParent();
-                       if (node.getReference().toString() != "Dimensions") {
+                    node = node.getParent();
+                    if (node.getReference().toString() != "Dimensions") {
                         //if this is in root level, we do not need to add that
                         HashMap<Integer, TreeNode> allLeaves = iterateTreeToGenerateChildren(node);
                         axisWiseList.add(allLeaves);
@@ -142,5 +143,5 @@ public class Thhread4 extends AsyncTask {
     }
 
 
-
 }
+

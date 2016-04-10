@@ -266,7 +266,7 @@ public class DimensionTree extends Fragment{
             //List<Long> timing =  new ArrayList<>();
             //timing.add(start);
             //MainActivity.ThreadProcesshingDetails.put("Inflated_QueryCall:Async", timing);
-            //Log.d("Inflated Query Call :", "Time taken to start job " + String.valueOf(System.currentTimeMillis()));
+            Log.d("Inflated Query Call :", "Time taken to start job " + String.valueOf(System.currentTimeMillis()));
 
             // start parallel thread to fetch inflated data for leaf levels
             CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
@@ -285,7 +285,35 @@ public class DimensionTree extends Fragment{
             Thhread4 th4Obj = new Thhread4(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                     MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
             th4Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            //Thread5
+            Thread5 th5Obj = new Thread5(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+            th5Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            Thread6 th6Obj = new Thread6(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+            th6Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            Thread7 th7Obj = new Thread7(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+            th7Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
+            Thread8 th8Obj = new Thread8(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+            th8Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            Thread9 th9Obj = new Thread9(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+            th9Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            Thread10 th10Obj = new Thread10(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+            th10Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            thread11 th11Obj = new thread11(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+            th11Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            Thread12 th12Obj = new Thread12(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+            th12Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            Thread13 th13Obj = new Thread13(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+            th13Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
         catch(Exception e)
         {
