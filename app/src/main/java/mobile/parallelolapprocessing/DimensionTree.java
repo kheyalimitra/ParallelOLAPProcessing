@@ -238,12 +238,12 @@ public class DimensionTree extends Fragment{
         this.startTimer =0;
         this.endTimer =0;
         try {
-            MDXObj.start();
+            //MDXObj.start();
             long time = (long)0.1;
-            //MDXObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-             while (!MDXUserQuery.isComplete) {
+            MDXObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+             /*while (!MDXUserQuery.isComplete) {
                 Thread.sleep(time);
-            }
+            }*/
             this.endTimer = System.currentTimeMillis();
 
             timeTaken = this.endTimer - this.startTimer;
@@ -325,6 +325,14 @@ public class DimensionTree extends Fragment{
 
     private void _populateListView(ListView selectedQuery, long timeTaken) {
         // if result set has value, display it
+        while(!MDXUserQuery.isComplete) {
+            try {
+                Thread.sleep((long) 0.1);
+            }
+            catch(Exception e){
+
+            }
+        }
         if (QueryProcessor.resultSet.size()>0){
             //<Long> results = new ArrayList<Long>(QueryProcessor.resultSet.values());
             List<String> newList = new ArrayList<String>();

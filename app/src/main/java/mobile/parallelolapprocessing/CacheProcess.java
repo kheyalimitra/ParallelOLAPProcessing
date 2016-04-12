@@ -146,7 +146,7 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//comment this wh
             Cube c = new Cube(olapServerURL);
             MDXQProcessor mdxQ = new MDXQProcessor();
 
-            List<List<HashMap<Integer, TreeNode>>> allLeaves = getLeavesPerAxis(keyValPairsForDimension, allAxisDetails.get(0));
+            List<List<HashMap<Integer, TreeNode>>> allLeaves = getLeavesPerAxis(keyValPairsForDimension,  allAxisDetails.get(0));
             List<List<List<Integer>>> newAxisDetails = generateNewAxisDetails(allLeaves, allAxisDetails);
             List<List<String>> cellOrdinalCombinations = new ArrayList<>();
             int queryCount = allAxisDetails.size();

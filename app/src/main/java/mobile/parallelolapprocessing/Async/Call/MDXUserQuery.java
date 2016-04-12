@@ -23,7 +23,7 @@ import mobile.parallelolapprocessing.MainActivity;
 /**
  * Created by KheyaliMitra on 2/1/2016.
  */
-public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryInput,Void, Boolean> {//implements Runnable
+public class MDXUserQuery extends AsyncTask<MDXUserQueryInput,Void, Boolean>{//implements Runnable{} {//implements Runnable
     public static List<List<List<Integer>>> allAxisDetails;
     public static List<Integer> selectedMeasures;
     public static HashMap<Integer, String> measureMap;
@@ -44,7 +44,7 @@ public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryIn
         this.callInflatedThread = isStartInflatedThread;
     }
 
-    @Override
+    //@Override
     public void run() {
        if(callInflatedThread){
            CallSynchronousThread();
@@ -54,7 +54,7 @@ public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryIn
            try {
                //Standard priority of the most important display threads, for compositing the screen and retrieving input events.
                //Process.setThreadPriority(Process.THREAD_PRIORITY_MORE_FAVORABLE);
-               new DimensionTree().startAsyncThreads();
+               //new DimensionTree().startAsyncThreads();
                qp.GetUserRequestedData(MDXQObj.entryPerDimension, MDXQObj.rootDimensionTree, MDXQObj.DimensionInput, MDXQObj.measuresObj,
                        MDXQObj.measureMap, MDXQObj.measureInput);
                isComplete = true;
@@ -73,19 +73,19 @@ public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryIn
 
     public void start ()
     {
-        if (inflatedDataDnldThread == null)
+        /*if (inflatedDataDnldThread == null)
         {
             inflatedDataDnldThread =new Thread (this);
             inflatedDataDnldThread.start ();
 
-        }
+        }*/
     }
     // this method will be called only when we need to test with only 2 threads
 public void CallSynchronousThread(){
     DimensionTree dt = new DimensionTree();
     dt.startAsyncThreads();
 }
-   // @Override
+    @Override
     protected Boolean doInBackground(MDXUserQueryInput... params) {
         this.run();
         return true;
