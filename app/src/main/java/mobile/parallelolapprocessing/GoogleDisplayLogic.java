@@ -57,24 +57,24 @@ public class GoogleDisplayLogic extends AppCompatActivity {
         timeStampsDetails.append("Data Fetch (ms): " + timeTaken.toString());
         DisplayThread dth =  new DisplayThread();
         long startDisplayTime = System.currentTimeMillis();
-        //dth.run();
+        dth.run();
 
-        dth.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        //dth.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         long wait = (long) 0.1;
-        while(DisplayThread.isFilled == false){
+        /*while(DisplayThread.isFilled == false){
             try {
                 Thread.sleep(wait);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
         //formattedTable =
-        if(formattedTable!= null) {
+        //if(formattedTable!= null) {
             _generateTable(formattedTable);
-        }
-        if(formattedBarChart != null) {
+        //}
+        //if(formattedBarChart != null) {
             _generateBarChart(formattedBarChart);
-        }
+        //}
         _displayPerformanceInfo(timeStampDisplay, timeStampsDetails, startDisplayTime);
 
         Log.d("Display Query:", "Google chart-Table display ends: " + String.valueOf( System.currentTimeMillis()));
@@ -84,8 +84,8 @@ public class GoogleDisplayLogic extends AppCompatActivity {
         formattedBarChart = null;
         formattedTable =  null;
         DisplayThread.isFilled = false;
-        DimensionTree dt = new DimensionTree();
-        dt.startAsyncThreads();
+        //DimensionTree dt = new DimensionTree();
+        //dt.startAsyncThreads();
 
     }
 

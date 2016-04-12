@@ -239,9 +239,10 @@ public class DimensionTree extends Fragment{
         this.endTimer =0;
         try {
             MDXObj.start();
+            long time = (long)0.1;
             //MDXObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
              while (!MDXUserQuery.isComplete) {
-                Thread.sleep(1);
+                Thread.sleep(time);
             }
             this.endTimer = System.currentTimeMillis();
 
@@ -282,7 +283,7 @@ public class DimensionTree extends Fragment{
             //Log.d("Inflated Query Call:", "Time taken to end both caching job " + String.valueOf(System.currentTimeMillis()));
             // thread 3:
 
-            Thhread4 th4Obj = new Thhread4(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+           /* Thhread4 th4Obj = new Thhread4(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                     MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
             th4Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             //Thread5
@@ -313,7 +314,7 @@ public class DimensionTree extends Fragment{
             th12Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             Thread13 th13Obj = new Thread13(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                     MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
-            th13Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            th13Obj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);*/
         }
         catch(Exception e)
         {
