@@ -223,16 +223,18 @@ public class MDXQProcessor {
         //only for testing:
         //String queries = "select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Geography].[Geography].[All Geographies].[Australia].[New South Wales]},2,LEAVES) on axis(1) ,DESCENDANTS({[Date].[Calendar].[All Periods].[CY 2006].[H1 CY 2006].[Q1 CY 2006]},2,LEAVES) on axis(2) from [Adventure Works]";
         //"select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Customer].[Education].[All Customers]},1,LEAVES) on axis(1) ,DESCENDANTS({[Date].[Calendar].[All Periods].[CY 2008]},4,LEAVES) on axis(2) from [Adventure Works]";
-        List<List<Long>>cubeOriginal = c.GetCubeData(finalMDXQueries.get(0).get(0));
-
-        HashMap<String,HashMap<String,Long>> resultSet =  this.CheckAndPopulateCache(cellOrdinalCombinations.get(0),new ArrayList<List<TreeNode>>(), cubeOriginal,isUserThread);// assuming only 1 query entry
-
-      // start this once the previous is done
+        // start this once the previous is done
         MDXUserQuery.allAxisDetails = allAxisDetails;
         MDXUserQuery.selectedMeasures = selectedMeasures;
         MDXUserQuery.measureMap = measureMap;
         MDXUserQuery.keyValPairsForDimension = keyValPairsForDimension;
         MDXUserQuery.cellOrdinalCombinations = cellOrdinalCombinations;
+        new DimensionTree().startAsyncThreads();
+        List<List<Long>>cubeOriginal = c.GetCubeData(finalMDXQueries.get(0).get(0));
+
+        HashMap<String,HashMap<String,Long>> resultSet =  this.CheckAndPopulateCache(cellOrdinalCombinations.get(0),new ArrayList<List<TreeNode>>(), cubeOriginal,isUserThread);// assuming only 1 query entry
+
+
 
         return resultSet;
     }

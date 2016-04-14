@@ -45,7 +45,6 @@ public class GoogleDisplayLogic extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d("Display Query:", "Google chart-Table display table-bar chart call: " + String.valueOf(System.currentTimeMillis()));
 
         setContentView(R.layout.googledisplaycomponent);
 
@@ -57,6 +56,8 @@ public class GoogleDisplayLogic extends AppCompatActivity {
         timeStampsDetails.append("Data Fetch (ms): " + timeTaken.toString());
         DisplayThread dth =  new DisplayThread();
         long startDisplayTime = System.currentTimeMillis();
+        Log.d("Display Query:", "Google chart-Table display table-bar chart call: " + String.valueOf(System.currentTimeMillis()));
+
         dth.run();
 
         //dth.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);

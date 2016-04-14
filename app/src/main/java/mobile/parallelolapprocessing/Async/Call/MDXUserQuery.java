@@ -36,6 +36,7 @@ public class MDXUserQuery extends AsyncTask<MDXUserQueryInput,Void, Boolean>{//i
    public MDXUserQuery(MDXUserQueryInput obj)
    {
        this.MDXQObj = obj;
+
    }
     // will be used only when we need to test this using 2 threads
     public MDXUserQuery(MDXUserQueryInput obj,boolean isStartInflatedThread)

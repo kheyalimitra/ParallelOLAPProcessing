@@ -82,7 +82,6 @@ public class QueryProcessor {
             timing.add(System.currentTimeMillis());
             MainActivity.ThreadProcesshingDetails.put("Original_Query", timing);
             Log.d("Original Query", "After generating the combination: " + String.valueOf(System.currentTimeMillis()));
-            new DimensionTree().startAsyncThreads();
             //Start timer
             DimensionTree.startTimer = System.currentTimeMillis();
             //check from cache

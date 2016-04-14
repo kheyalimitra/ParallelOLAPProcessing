@@ -241,13 +241,13 @@ public class DimensionTree extends Fragment{
             //MDXObj.start();
             long time = (long)0.1;
             MDXObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            this.startTimer = System.currentTimeMillis();
              /*while (!MDXUserQuery.isComplete) {
                 Thread.sleep(time);
             }*/
-            this.endTimer = System.currentTimeMillis();
 
-            timeTaken = this.endTimer - this.startTimer;
-            _populateListView(selectedQuery, this.endTimer - this.startTimer);
+
+            _populateListView(selectedQuery, this.startTimer);
             // start asynchronous thread using only 2 thread frame
             //MDXObj = new MDXUserQuery(mdxInputObj,true);
            // MDXObj.start();
@@ -323,7 +323,7 @@ public class DimensionTree extends Fragment{
     }
 
 
-    private void _populateListView(ListView selectedQuery, long timeTaken) {
+    private void _populateListView(ListView selectedQuery, long timeStart) {
         // if result set has value, display it
         while(!MDXUserQuery.isComplete) {
             try {
@@ -333,13 +333,14 @@ public class DimensionTree extends Fragment{
 
             }
         }
+        long time = this.timeTaken = System.currentTimeMillis() - timeStart;
         if (QueryProcessor.resultSet.size()>0){
             //<Long> results = new ArrayList<Long>(QueryProcessor.resultSet.values());
             List<String> newList = new ArrayList<String>();
             //for (Long myInt : results) {
              //   newList.add(String.valueOf(myInt));
            // }
-            newList.add("total Time taken (ms): "+String.valueOf(timeTaken));
+            newList.add("total Time taken (ms): "+String.valueOf(time));
             SimpleArrayAdapter a = new SimpleArrayAdapter(MainActivity.MainContext,newList);
             //Sets Adapter
             selectedQuery.setAdapter(a);
