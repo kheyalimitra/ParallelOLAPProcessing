@@ -103,6 +103,7 @@ public class GoogleDisplayLogic extends AppCompatActivity {
         }
         timeStampsDetails.append(" | % of Hit:" + String.valueOf(QueryProcessor.hitcount*100));
         timeStampDisplay.setText(timeStampsDetails.toString());
+        //new DimensionTree().startAsyncThreads();
     }
 
 
