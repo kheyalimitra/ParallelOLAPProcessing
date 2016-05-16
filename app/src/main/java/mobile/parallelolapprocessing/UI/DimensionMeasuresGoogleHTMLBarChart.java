@@ -186,11 +186,13 @@ public class DimensionMeasuresGoogleHTMLBarChart implements IDimensionMeasureDis
                                                List<Integer> UserSeletedMeasures) throws InterruptedException {
 
         StringBuilder sb = new StringBuilder();
-        int i=0;
+        float waitCount= (float)0;
+        float time = (float)0.1;
         for(Integer measureInt:UserSeletedMeasures){
-            while(CacheContent.get(KeyCombination)== null) {
-                Thread.sleep(1);
-            }
+//            while(CacheContent.get(KeyCombination)== null && waitCount < 100) {
+//                Thread.sleep((long)1);
+//                waitCount +=1;
+//            }
             HashMap<Integer, Long> keyValPair = CacheContent.get(KeyCombination);
             if(keyValPair!=null) {
                 Long val = keyValPair.get(measureInt);

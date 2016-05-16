@@ -161,10 +161,10 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//comment this wh
             {
                 CacheProcess.inflatedQueries.add(queryListForChildren.get(0));
 
-                List<List<Long>> cubeInflated = c.GetCubeData(CacheProcess.inflatedQueries.get(CacheProcess.inflatedQueries.size()-1));
+                List<List<Long>> cubeInflated = c.GetCubeData(queryListForChildren.get(0));
 
                 mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated,false);// assuming only 1 query entry
-                //Log.d("Inflated Query 1:", "Time taken to download and populate " + String.valueOf(System.currentTimeMillis()));
+                Log.d("Inflated Query 1:", "MDX Query  " + queryListForChildren.get(0));
 
             }
         }

@@ -210,10 +210,18 @@ public class DimensionMeasureGoogleHTMLTable implements IDimensionMeasureDisplay
 
         StringBuilder sb = new StringBuilder();
         int i=0;
+        float waitCount= (float)0;
+        float time = (float)0.1;
         for(Integer measureInt:UserSeletedMeasures){
-            while(CacheContent.get(KeyCombination)== null) {
+            while(CacheContent.get(KeyCombination)== null  ) {
                 Thread.sleep(1);
+                waitCount +=1;
+               // if(waitCount> 1000){
+                //    break;
+               // }
             }
+            //Log.d("Display Query:", "wait count: " + String.valueOf( waitCount));
+
             HashMap<Integer, Long> keyValPair = CacheContent.get(KeyCombination);
             if(keyValPair!=null) {
                 // calculating total size of data which is displayed (approximately)

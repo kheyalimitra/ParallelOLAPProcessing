@@ -85,8 +85,9 @@ public class GoogleDisplayLogic extends AppCompatActivity {
         formattedBarChart = null;
         formattedTable =  null;
         DisplayThread.isFilled = false;
-        //DimensionTree dt = new DimensionTree();
-        //dt.startAsyncThreads();
+        //Serial execution
+       // DimensionTree dt = new DimensionTree();
+       // dt.startAsyncThreads();
 
     }
 

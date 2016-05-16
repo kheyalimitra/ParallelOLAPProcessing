@@ -17,6 +17,7 @@ import mobile.parallelolapprocessing.DimensionTree;
 import mobile.parallelolapprocessing.GoogleDisplayLogic;
 import mobile.parallelolapprocessing.MainActivity;
 import mobile.parallelolapprocessing.UI.DimensionMeasureGoogleHTMLTable;
+import mobile.parallelolapprocessing.UI.DisplayThread;
 
 
 public class QueryProcessor {
@@ -78,9 +79,10 @@ public class QueryProcessor {
             MDXUserQuery.allAxisDetails = new MDXQProcessor().GetAxisDetails(
                     new ArrayList<>(selectedMeasureMap.keySet()),
                     generatedKeys);
-            List<Long> timing = new ArrayList<>();
-            timing.add(System.currentTimeMillis());
-            MainActivity.ThreadProcesshingDetails.put("Original_Query", timing);
+            //List<Long> timing = new ArrayList<>();
+           // timing.add(System.currentTimeMillis());
+            //MainActivity.ThreadProcesshingDetails.put("Original_Query", timing);
+            DisplayThread.downloadedResultSet = new HashMap<>();
             Log.d("Original Query", "After generating the combination: " + String.valueOf(System.currentTimeMillis()));
             //Start timer
             DimensionTree.startTimer = System.currentTimeMillis();
@@ -94,11 +96,21 @@ public class QueryProcessor {
             float hit = originalSize - (nonCachedKeys.size()*nonCachedMeasures.size());
             hitcount =(float) Math.round((hit / originalSize)*100) /100;
             if (nonCachedKeys.size() > 0) {
-                mdxQueryProcessorObj.ProcessUserQuery(nonCachedMeasures, selectedMeasureMap,dimensionsInAxes,
+                HashMap<String,HashMap<String,Long>>  result = mdxQueryProcessorObj.ProcessUserQuery(nonCachedMeasures, selectedMeasureMap, dimensionsInAxes,
                         nonCachedKeys, false, true);
 
                     MDXUserQuery.isComplete = true;
                     return true;
+            }
+            // 100% hit
+            else{
+                if(nonCachedKeys.size()== 0) {
+                    // just to download inflated query data
+                    List<Integer> selctedMeasureCopyList = new ArrayList<>();
+                    selctedMeasureCopyList.addAll(selectedMeasureMapCopy);
+
+                    mdxQueryProcessorObj.ProcessUserSelectionWhen100Hit(selctedMeasureCopyList, selectedMeasureMap, dimensionsInAxes, generatedKeyCopy);
+                }
             }
 
         } catch (Exception ex) {

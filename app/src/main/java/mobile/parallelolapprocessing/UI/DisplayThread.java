@@ -6,6 +6,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import DataRetrieval.Dimension;
@@ -20,19 +21,20 @@ public class DisplayThread extends AsyncTask{ //implements Runnable {
 
     private Thread displayThreadInstance =  null;
     public static boolean isFilled = false;
+    public static HashMap<String, HashMap<Integer, Long>> downloadedResultSet = new HashMap();
     //@Override
     public void run() {
         //String s = _displayResultInTable();
 
         DimensionTree.UserSelectedDimensionCombinations = this._sortEachCombination(DimensionTree.UserSelectedDimensionCombinations);
         IDimensionMeasureDisplay displayResult = new DimensionMeasureGoogleHTMLTable();
-        GoogleDisplayLogic.formattedTable = displayResult.GetDisplay(MainActivity.CachedDataCubes,
+        GoogleDisplayLogic.formattedTable = displayResult.GetDisplay(MainActivity.CachedDataCubes,//downloadedResultSet,
                 DimensionTree.UserSelectedDimensionCombinations,
                 DimensionTree.UserSelectedMeasures,
                 Dimension.dimensionHiearchyMap,
                 MainActivity.MeasuresList);
         IDimensionMeasureDisplay displayResult2 = new DimensionMeasuresGoogleHTMLBarChart();
-        GoogleDisplayLogic.formattedBarChart = displayResult2.GetDisplay(MainActivity.CachedDataCubes,
+        GoogleDisplayLogic.formattedBarChart = displayResult2.GetDisplay(MainActivity.CachedDataCubes,//downloadedResultSet,
                 DimensionTree.UserSelectedDimensionCombinations,
                 DimensionTree.UserSelectedMeasures,
                 Dimension.dimensionHiearchyMap,
