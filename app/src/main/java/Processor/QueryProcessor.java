@@ -85,14 +85,23 @@ public class QueryProcessor {
             List<String> nonCachedKeys = nonCachedSelections.KeyCombinations;
             // % of hit in cache
             float originalSize = DimensionTree.UserSelectedDimensionCombinations.size()*DimensionTree.UserSelectedMeasures.size();
-            float hit = originalSize - (nonCachedKeys.size()*nonCachedMeasures.size());
-            hitcount =(float) Math.round((hit / originalSize)*100) /100;
+            float miss = Math.abs(nonCachedKeys.size()* nonCachedMeasures.size());
+            hitcount =(float) Math.round((1 -(miss / originalSize))*100) /100;
             if (nonCachedKeys.size() > 0) {
                 mdxQueryProcessorObj.ProcessUserQuery(nonCachedMeasures, selectedMeasureMap,dimensionsInAxes,
                         nonCachedKeys, false, true);
 
                     MDXUserQuery.isComplete = true;
                     return true;
+            }// 100% hit
+            else{
+                if(nonCachedKeys.size()== 0) {
+                    // just to download inflated query data
+                    List<Integer> selctedMeasureCopyList = new ArrayList<>();
+                    selctedMeasureCopyList.addAll(selectedMeasureMapCopy);
+
+                    mdxQueryProcessorObj.ProcessUserSelectionWhen100Hit(selctedMeasureCopyList, selectedMeasureMap, dimensionsInAxes, generatedKeyCopy);
+                }
             }
 
         } catch (Exception ex) {

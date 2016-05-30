@@ -2,6 +2,7 @@ package MDXQueryProcessor;
 
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Log;
 
 import org.apache.commons.lang.StringUtils;
 import DataRetrieval.Cube;
@@ -54,7 +55,7 @@ public class MDXQProcessor {
 
         List<Integer> MeasuresNeedsToFecth = new ArrayList<>();
 
-        WeakHashMap<Integer,Long> measuresForCachedKeyCombination = MainActivity.CachedDataCubes.get(KeyCombination);
+        HashMap<Integer,Long> measuresForCachedKeyCombination = MainActivity.CachedDataCubes.get(KeyCombination);
         if(measuresForCachedKeyCombination != null)  {
         Iterator<Integer> measuresToCheckIterator =  MeasureRequestedByUser.iterator();
             while(measuresToCheckIterator.hasNext()){
@@ -72,7 +73,7 @@ public class MDXQProcessor {
     }
 
     private boolean _isMeasuresNonExistentInCacheForAKey(String KeyCombination,List<Integer> MeasureRequestedByUser) {
-        WeakHashMap<Integer, Long> measuresForCachedKeyCombination = MainActivity.CachedDataCubes.get(KeyCombination);
+        HashMap<Integer, Long> measuresForCachedKeyCombination = MainActivity.CachedDataCubes.get(KeyCombination);
         if (measuresForCachedKeyCombination != null) {
             Iterator<Integer> measuresToCheckIterator = MeasureRequestedByUser.iterator();
             while (measuresToCheckIterator.hasNext()) {
@@ -85,7 +86,24 @@ public class MDXQProcessor {
         }
         return false;
     }
+    public void ProcessUserSelectionWhen100Hit(List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,HashMap<Integer,
+            List<TreeNode>> selectedDimension,List<String>filteredKeys) throws  Exception{
+        List<List<List<Integer>>> allAxisDetails = this.GetAxisDetails(selectedMeasures,filteredKeys);
+        List<List<String>> cellOrdinalCombinations= new ArrayList<>();
+        int queryCount =allAxisDetails.size();
+        for(int i=0;i<queryCount;i++) {
+            cellOrdinalCombinations.add(this.GenerateCellOrdinal(allAxisDetails.get(i)));
 
+        }
+        HashMap<Integer,TreeNode> keyValPairsForDimension = GetKeyValuePairOfSelectedDimensionsFromTree(selectedDimension);
+        MDXUserQuery.allAxisDetails = allAxisDetails;
+        MDXUserQuery.selectedMeasures = selectedMeasures;
+        MDXUserQuery.measureMap = measureMap;
+        MDXUserQuery.keyValPairsForDimension = keyValPairsForDimension;
+        MDXUserQuery.cellOrdinalCombinations = cellOrdinalCombinations;
+        new DimensionTree().startAsyncThreads();
+
+    }
 
     /**
      * Checks user query entry from cache, if found, removes the entry to be fetched from server
@@ -197,7 +215,7 @@ public class MDXQProcessor {
          * @param selectedDimension
          * @param filteredKeys
          */
-    public HashMap<String,WeakHashMap<String,Long>> ProcessUserQuery(List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,HashMap<Integer,
+    public HashMap<String,HashMap<String,Long>> ProcessUserQuery(List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,HashMap<Integer,
             List<TreeNode>> selectedDimension,List<String>filteredKeys,boolean isInnerThreadCalled,boolean isUserThread) throws  Exception{
 
         //String olapServiceURL="http://192.168.0.207/OLAPService/AdventureWorks.asmx";
@@ -223,7 +241,7 @@ public class MDXQProcessor {
         //"select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Customer].[Education].[All Customers]},1,LEAVES) on axis(1) ,DESCENDANTS({[Date].[Calendar].[All Periods].[CY 2008]},4,LEAVES) on axis(2) from [Adventure Works]";
         List<List<Long>>cubeOriginal = c.GetCubeData(finalMDXQueries.get(0).get(0));
 
-        HashMap<String,WeakHashMap<String,Long>> resultSet =  this.CheckAndPopulateCache(cellOrdinalCombinations.get(0),new ArrayList<List<TreeNode>>(), cubeOriginal,isUserThread);// assuming only 1 query entry
+        HashMap<String,HashMap<String,Long>> resultSet =  this.CheckAndPopulateCache(cellOrdinalCombinations.get(0),new ArrayList<List<TreeNode>>(), cubeOriginal,isUserThread);// assuming only 1 query entry
 
       // start this once the previous is done
         MDXUserQuery.allAxisDetails = allAxisDetails;
@@ -231,6 +249,8 @@ public class MDXQProcessor {
         MDXUserQuery.measureMap = measureMap;
         MDXUserQuery.keyValPairsForDimension = keyValPairsForDimension;
         MDXUserQuery.cellOrdinalCombinations = cellOrdinalCombinations;
+        Log.d("Original Query", "Query process ends " + String.valueOf(System.currentTimeMillis()));
+        Log.d("Original Query","MDX query:"+ String.valueOf(finalMDXQueries.get(0).get(0)));
 
         return resultSet;
     }
@@ -511,9 +531,9 @@ public class MDXQProcessor {
         result = newResult;
         return  _generateKeyCombinations(axisIndex+1,keys,result);
     }
-    public HashMap<String,WeakHashMap<String,Long>> CheckAndPopulateCache(List<String> combinations, List<List<TreeNode>> parentEntiresPerAxis, List<List<Long>> downloadedCube, boolean isUserQuery) {
-        HashMap<String,WeakHashMap<String,Long>> resultSet =  new HashMap<>();
-        WeakHashMap<String,Long> totalSum=new WeakHashMap<>();
+    public HashMap<String,HashMap<String,Long>> CheckAndPopulateCache(List<String> combinations, List<List<TreeNode>> parentEntiresPerAxis, List<List<Long>> downloadedCube, boolean isUserQuery) {
+        HashMap<String,HashMap<String,Long>> resultSet =  new HashMap<>();
+        HashMap<String,Long> totalSum=new HashMap<>();
         // no possible result
         long dummy=0;
         int cellMeasuresCount = downloadedCube.size();
@@ -529,12 +549,11 @@ public class MDXQProcessor {
                         combinations.remove((int) cellOrdinal);
                         String dimensionCombination = this._sortKeyCombination(combination.substring(combination.indexOf("#") + 1));
                         String measure = combination.substring(0, combination.indexOf("#"));
-
-                        WeakHashMap<Integer, Long> keyVal = new WeakHashMap<>();
+                        HashMap<Integer, Long> keyVal = new HashMap<>();
 
                         //update existing cache
                         String[] measureList = measure.replace("[", "").replace("]", "").split(",");
-                        WeakHashMap<String,Long> measureWiseResult = _updateMainCache(downloadedCube, totalSum, i, dimensionCombination, keyVal, measureList);
+                        HashMap<String,Long> measureWiseResult = _updateMainCache(downloadedCube, totalSum, i, dimensionCombination, keyVal, measureList);
                         resultSet.put(dimensionCombination, measureWiseResult);
                     }
                 }
@@ -546,12 +565,12 @@ public class MDXQProcessor {
                     String dimensionCombination = this._sortKeyCombination(combinations.get(i).substring(combinations.get(i).indexOf("#") + 1));
                     String measure = combinations.get(i).substring(0, combinations.get(i).indexOf("#"));
 
-                    WeakHashMap<Integer, Long> keyVal = new WeakHashMap<>();
+                    HashMap<Integer, Long> keyVal = new HashMap<>();
 
                     //update existing cache
                     String[] measureList = measure.replace("[", "").replace("]", "").split(",");
 
-                    WeakHashMap<String,Long> dummyRecords = _updateMainCache(null, totalSum, i, dimensionCombination, keyVal, measureList);
+                    HashMap<String,Long> dummyRecords = _updateMainCache(null, totalSum, i, dimensionCombination, keyVal, measureList);
                     if(isUserQuery) {
                        resultSet.put(dimensionCombination,dummyRecords);
                        }
@@ -569,8 +588,8 @@ public class MDXQProcessor {
 
     }
 
-    private WeakHashMap<String,Long>  _updateMainCache(List<List<Long>> downloadedCube, WeakHashMap<String, Long> totalSum, int i, String dimensionCombination, WeakHashMap<Integer, Long> keyVal, String[] measureList) {
-        WeakHashMap<String,Long> measureWiseResult = new WeakHashMap<>();
+    private HashMap<String,Long>  _updateMainCache(List<List<Long>> downloadedCube, HashMap<String, Long> totalSum, int i, String dimensionCombination, HashMap<Integer, Long> keyVal, String[] measureList) {
+        HashMap<String,Long> measureWiseResult = new HashMap<>();
         long dummy = 0;
         if (MainActivity.CachedDataCubes.containsKey(dimensionCombination)){//MainActivity.CachedDataCubes.containsKey(dimensionCombination)) {
             // measure list per axis
@@ -658,7 +677,7 @@ public class MDXQProcessor {
 
             }
             else {
-                WeakHashMap<Integer, Long> keyVal = new WeakHashMap<>();
+                HashMap<Integer, Long> keyVal = new HashMap<>();
                 keyVal.put(Integer.parseInt(measures.get(i).toString()),totalSum.get(measures.get(i).toString()));
                 MainActivity.CachedDataCubes.put(domainKey,keyVal);
             }

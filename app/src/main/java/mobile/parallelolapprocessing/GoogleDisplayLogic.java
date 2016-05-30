@@ -65,6 +65,7 @@ public class GoogleDisplayLogic extends AppCompatActivity {
 
         _generateBarChart(formattedBarChart);
         _displayPerformanceInfo(timeStampDisplay, timeStampsDetails, startDisplayTime);
+        Log.d("Original Query", "Display process ends " + String.valueOf(System.currentTimeMillis()));
 
         // flush previous query by user:
         MDXUserQuery.isComplete =  false;
@@ -74,16 +75,16 @@ public class GoogleDisplayLogic extends AppCompatActivity {
     }
 
     private void _displayPerformanceInfo(TextView timeStampDisplay, StringBuilder timeStampsDetails, Long startDisplayTime) {
-        Long endDisplayTime =  System.currentTimeMillis()-startDisplayTime;
-        timeStampsDetails.append("| Display (ms):" + endDisplayTime.toString());
-        if(DimensionMeasureGoogleHTMLTable.DataDisplaySize>=1024) {
-            Long size = (DimensionMeasureGoogleHTMLTable.DataDisplaySize / 1024);
-            timeStampsDetails.append("| Size (kb):" + size.toString());
-        }
-        else
-        {
-            timeStampsDetails.append("| Size (b):" + DimensionMeasureGoogleHTMLTable.DataDisplaySize.toString());
-        }
+        //Long endDisplayTime =  System.currentTimeMillis()-startDisplayTime;
+        //timeStampsDetails.append("| Display (ms):" + endDisplayTime.toString());
+        //if(DimensionMeasureGoogleHTMLTable.DataDisplaySize>=1024) {
+         //   Long size = (DimensionMeasureGoogleHTMLTable.DataDisplaySize / 1024);
+        //    timeStampsDetails.append("| Size (kb):" + size.toString());
+        //}
+       // else
+       // {
+       //     timeStampsDetails.append("| Size (b):" + DimensionMeasureGoogleHTMLTable.DataDisplaySize.toString());
+       // }
         timeStampsDetails.append(" | % of Hit:" + String.valueOf(QueryProcessor.hitcount*100));
         timeStampDisplay.setText(timeStampsDetails.toString());
     }

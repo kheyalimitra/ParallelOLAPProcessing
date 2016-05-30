@@ -81,8 +81,12 @@ public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> {
                         keyValPairsForDimension, true, true);
                 if(!CacheProcessUpto1Level.inflatedQueries.contains(queryListForSiblings.get(0)) && !CacheProcess.inflatedQueries.contains(queryListForSiblings.get(0))) {
                    CacheProcessUpto1Level.inflatedQueries.add(queryListForSiblings.get(0));
-                   List<List<Long>> cubeInflated = c.GetCubeData(CacheProcessUpto1Level.inflatedQueries.get(CacheProcessUpto1Level.inflatedQueries.size()-1));// since last entry is the current one
-                   mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated,false);// assuming only 1 query entry
+                    Log.d("Inflated Query2", "Start data download  " + String.valueOf(System.currentTimeMillis()));
+                    Log.d("Inflated Query2", "MDX query:" + String.valueOf(queryListForSiblings.get(0)));
+
+                    List<List<Long>> cubeInflated = c.GetCubeData(CacheProcessUpto1Level.inflatedQueries.get(CacheProcessUpto1Level.inflatedQueries.size()-1));// since last entry is the current one
+                    mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated, false);// assuming only 1 query entry
+                    Log.d("Inflated Query2", "Process ends  " + String.valueOf(System.currentTimeMillis()));
                 }
             }
         }

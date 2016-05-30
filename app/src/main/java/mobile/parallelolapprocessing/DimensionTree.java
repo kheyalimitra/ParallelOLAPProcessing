@@ -120,6 +120,15 @@ public class DimensionTree extends Fragment{
         selectedQuery.setVisibility(View.INVISIBLE);
         finalSelection.setVisibility(View.INVISIBLE);
         backBtn.setVisibility(View.INVISIBLE);
+        Runtime runtime = Runtime.getRuntime();
+//        long maxMemory=runtime.maxMemory();
+//        long VMmemory  = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+//
+//        long VMTotalSize = Runtime.getRuntime().totalMemory();
+//        Log.d("Heap Size","VM Heap Size Limit  "+String.valueOf(maxMemory));
+//        Log.d("Heap Size","Allocated VM Memory  "+String.valueOf(VMmemory));
+//        Log.d("Heap Size","VM Heap Size "+String.valueOf(VMTotalSize));
+
         //axis.setVisibility(View.INVISIBLE);
         //dimesionPerAxis.setVisibility(View.INVISIBLE);
         try {
@@ -252,6 +261,8 @@ public class DimensionTree extends Fragment{
         try {
             MDXObj.start();
             //MDXObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            // start asynchronous thread
+            startAsyncThreads();
              while (!MDXUserQuery.isComplete) {
                 Thread.sleep(1);
             }
@@ -260,8 +271,7 @@ public class DimensionTree extends Fragment{
             timeTaken = this.endTimer - this.startTimer;
             _populateListView(selectedQuery, this.endTimer - this.startTimer);
 
-             // start asynchronous thread
-            startAsyncThreads();
+
 
 
 
