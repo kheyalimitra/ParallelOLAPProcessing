@@ -66,7 +66,7 @@ public class GoogleDisplayLogic extends AppCompatActivity {
         _generateBarChart(formattedBarChart);
         _displayPerformanceInfo(timeStampDisplay, timeStampsDetails, startDisplayTime);
         Log.d("Original Query", "Display process ends " + String.valueOf(System.currentTimeMillis()));
-
+        //run sequential execution of inflated queries
         // flush previous query by user:
         MDXUserQuery.isComplete =  false;
         //QueryProcessor.resultSet = new HashMap<>();

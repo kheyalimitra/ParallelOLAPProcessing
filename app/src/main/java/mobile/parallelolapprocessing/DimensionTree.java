@@ -262,7 +262,7 @@ public class DimensionTree extends Fragment{
             MDXObj.start();
             //MDXObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             // start asynchronous thread
-            startAsyncThreads();
+            //startAsyncThreads();
              while (!MDXUserQuery.isComplete) {
                 Thread.sleep(1);
             }
@@ -282,26 +282,26 @@ public class DimensionTree extends Fragment{
     }
 
 
-    public void startAsyncThreads(){
-        try {
-            // start parallel thread to fetch inflated data for leaf levels
-            CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
-                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
-
-            cache.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-
-            // start another thread to fetch siblings data
-            CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
-                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
-
-            cacheParentLevelObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-
-        }
-        catch(Exception e)
-        {
-            String s = e.getMessage();
-        }
-    }
+//    public void startAsyncThreads(){
+//        try {
+//            // start parallel thread to fetch inflated data for leaf levels
+//            CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+//                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+//
+//            cache.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+//
+//            // start another thread to fetch siblings data
+//            CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+//                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+//
+//            cacheParentLevelObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+//
+//        }
+//        catch(Exception e)
+//        {
+//            String s = e.getMessage();
+//        }
+//    }
 
 
     private void _populateListView(ListView selectedQuery, long timeTaken) {
@@ -555,7 +555,18 @@ public class DimensionTree extends Fragment{
             return newChildTreeNode;
     }
 
+public void executeSerially(){
+    CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+            MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
 
+    cache.run();
+
+    // start another thread to fetch siblings data
+    CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+            MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+
+    cacheParentLevelObj.run();
+}
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu, menu);

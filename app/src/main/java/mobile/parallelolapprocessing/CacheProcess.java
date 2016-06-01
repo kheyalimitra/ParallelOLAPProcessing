@@ -27,7 +27,7 @@ import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
 /**
  * Created by KheyaliMitra on 1/31/2016.
  */
-public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runnable {// this is for passing parameters in doInBackground method
+public class CacheProcess {//extends AsyncTask<Void,Void,String> {//implements Runnable {// this is for passing parameters in doInBackground method
     public List<List<List<Integer>>> allAxisDetails;
     public List<Integer> selectedMeasures;
     public HashMap<Integer, String> measureMap;
@@ -137,7 +137,7 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
     }
 
 
-    private void run() {
+    public void run() {
         try {
             start = System.currentTimeMillis();
 
@@ -160,7 +160,7 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
                 CacheProcess.inflatedQueries.add(queryListForChildren.get(0));
                 Log.d("Inflated Query1", "MDX query: " + String.valueOf(queryListForChildren.get(0)));
                 List<List<Long>> cubeInflated = c.GetCubeData(queryListForChildren.get(0));
-
+                Log.d("Inflated Query1", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
                 mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated, false);// assuming only 1 query entry
                 Log.d("Inflated Query1", "process ends " + String.valueOf(System.currentTimeMillis()));
             }
@@ -170,10 +170,10 @@ public class CacheProcess extends AsyncTask<Void,Void,String> {//implements Runn
         }
     }
 
-    @Override
-    protected String doInBackground(Void... params) {
-        this.run();
+   // @Override
+   // protected String doInBackground(Void... params) {
+    //    this.run();
 
-        return "Success";
-    }
+   //     return "Success";
+   // }
 }

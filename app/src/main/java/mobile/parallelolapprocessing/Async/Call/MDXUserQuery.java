@@ -40,12 +40,13 @@ public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryIn
         QueryProcessor qp = new QueryProcessor();
         try {
             //Standard priority of the most important display threads, for compositing the screen and retrieving input events.
-            //Process.setThreadPriority(Process.THREAD_PRIORITY_MORE_FAVORABLE);
-            //new DimensionTree()._startAsyncThreads();
+
             Log.d("Original Query","Query process starts "+ String.valueOf(System.currentTimeMillis()));
-             qp.GetUserRequestedData(MDXQObj.entryPerDimension,MDXQObj.rootDimensionTree,MDXQObj.DimensionInput,MDXQObj.measuresObj,
-                    MDXQObj.measureMap,MDXQObj.measureInput);
+             qp.GetUserRequestedData(MDXQObj.entryPerDimension, MDXQObj.rootDimensionTree, MDXQObj.DimensionInput, MDXQObj.measuresObj,
+                     MDXQObj.measureMap, MDXQObj.measureInput);
             isComplete = true;
+            // remove this when done
+            new DimensionTree().executeSerially();
 
         } catch (Exception e) {
             e.printStackTrace();

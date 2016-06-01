@@ -71,8 +71,7 @@ public class QueryProcessor {
             DimensionTree.UserSelectedMeasures = getCloneOfGivenList(new ArrayList<>(selectedMeasureMap.keySet()));
             Set<Integer> selectedMeasureMapCopy  = new HashSet<>(selectedMeasureMap.keySet());
 
-            // takes care of past dimensions selected and if needed flushing cache
-            _recordQueryHistory();
+
             MDXUserQuery.allAxisDetails = new MDXQProcessor().GetAxisDetails(
                     new ArrayList<>(selectedMeasureMap.keySet()),
                     generatedKeys);
@@ -81,12 +80,21 @@ public class QueryProcessor {
             //check from cache
             DimensionKeyCombinationAndMeasures nonCachedSelections = mdxQueryProcessorObj.GetAllDimensionAndMeasuresToFetch(generatedKeyCopy,
                                                                                         selectedMeasureMapCopy);
-            List<Integer> nonCachedMeasures = nonCachedSelections.Measures;
+            List<Integer> nonCachedMeasures =  new ArrayList<>(nonCachedSelections.Measures);
             List<String> nonCachedKeys = nonCachedSelections.KeyCombinations;
             // % of hit in cache
             float originalSize = DimensionTree.UserSelectedDimensionCombinations.size()*DimensionTree.UserSelectedMeasures.size();
             float miss = Math.abs(nonCachedKeys.size()* nonCachedMeasures.size());
             hitcount =(float) Math.round((1 -(miss / originalSize))*100) /100;
+            boolean isFlush = false;
+            // if % of hit is less than 10 % then we flush the cache.. in order to make room for new one.
+           // if(hitcount < 0.1 )
+            //{
+              //  isFlush = true;
+
+            //}
+            // takes care of past dimensions selected and if needed flushing cache
+            _recordQueryHistory(isFlush);
             if (nonCachedKeys.size() > 0) {
                 mdxQueryProcessorObj.ProcessUserQuery(nonCachedMeasures, selectedMeasureMap,dimensionsInAxes,
                         nonCachedKeys, false, true);
@@ -104,6 +112,7 @@ public class QueryProcessor {
                 }
             }
 
+
         } catch (Exception ex) {
 
             return false;
@@ -111,9 +120,9 @@ public class QueryProcessor {
         MDXUserQuery.isComplete = true;
         return true;
     }
-    private void _recordQueryHistory() {
+    private void _recordQueryHistory(boolean isFlush) {
         // if 0% hit and usr is moving to different direction that previous one flush memory
-        if(!_isCurrentSelectionRelatedToPastDimensions())
+        if(!_isCurrentSelectionRelatedToPastDimensions() || isFlush)
         {
             if(MainActivity.CachedDataCubes.size()>0) {
                 MainActivity.CachedDataCubes.clear();

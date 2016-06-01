@@ -56,7 +56,10 @@ public class MDXQProcessor {
         List<Integer> MeasuresNeedsToFecth = new ArrayList<>();
 
         HashMap<Integer,Long> measuresForCachedKeyCombination = MainActivity.CachedDataCubes.get(KeyCombination);
-        if(measuresForCachedKeyCombination != null)  {
+        if(measuresForCachedKeyCombination == null) {
+            return MeasureRequestedByUser;
+        }
+        else{
         Iterator<Integer> measuresToCheckIterator =  MeasureRequestedByUser.iterator();
             while(measuresToCheckIterator.hasNext()){
                 Integer userMeasureKey = measuresToCheckIterator.next();
@@ -65,16 +68,19 @@ public class MDXQProcessor {
                 }
 
             }
-        }else{
-            return MeasureRequestedByUser;
+
         }
 
         return MeasuresNeedsToFecth;
+
     }
 
     private boolean _isMeasuresNonExistentInCacheForAKey(String KeyCombination,List<Integer> MeasureRequestedByUser) {
         HashMap<Integer, Long> measuresForCachedKeyCombination = MainActivity.CachedDataCubes.get(KeyCombination);
-        if (measuresForCachedKeyCombination != null) {
+        if (measuresForCachedKeyCombination == null) {
+            return true;
+        }
+        else {
             Iterator<Integer> measuresToCheckIterator = MeasureRequestedByUser.iterator();
             while (measuresToCheckIterator.hasNext()) {
                 Integer userMeasureKey = measuresToCheckIterator.next();
@@ -83,8 +89,8 @@ public class MDXQProcessor {
                 }
 
             }
+            return false;
         }
-        return false;
     }
     public void ProcessUserSelectionWhen100Hit(List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,HashMap<Integer,
             List<TreeNode>> selectedDimension,List<String>filteredKeys) throws  Exception{
@@ -101,7 +107,9 @@ public class MDXQProcessor {
         MDXUserQuery.measureMap = measureMap;
         MDXUserQuery.keyValPairsForDimension = keyValPairsForDimension;
         MDXUserQuery.cellOrdinalCombinations = cellOrdinalCombinations;
-        new DimensionTree().startAsyncThreads();
+        // uncomment it after serial execution
+
+        //new DimensionTree().startAsyncThreads();
 
     }
 
@@ -127,6 +135,7 @@ public class MDXQProcessor {
                 }else {
                     List<Integer> measuresToAdd = this._getNonExistentMeasuresFromCacheByKey(key, selectedMeasuresKeys);
                     if(measuresToAdd.size() > 0) {
+
                         keyCombinationAndMeasuresToFetch.Measures.addAll(measuresToAdd);
                         keyCombinationAndMeasuresToFetch.KeyCombinations.add(key);
                     }
@@ -136,7 +145,7 @@ public class MDXQProcessor {
         }
         else{
             keyCombinationAndMeasuresToFetch.KeyCombinations =keys;
-            keyCombinationAndMeasuresToFetch.Measures = selectedMeasuresKeys;
+            keyCombinationAndMeasuresToFetch.Measures = new HashSet<>(selectedMeasuresKeys);
         }
         return  keyCombinationAndMeasuresToFetch;
     }
@@ -235,20 +244,28 @@ public class MDXQProcessor {
         HashMap<Integer,TreeNode> keyValPairsForDimension = GetKeyValuePairOfSelectedDimensionsFromTree(selectedDimension);
         requestedQueries = GenerateQueryString(allAxisDetails, selectedMeasures, measureMap, keyValPairsForDimension, false,false);
         finalMDXQueries.add(requestedQueries);
-        Cube c =  new Cube(QueryProcessor.olapServiceURL);
-        //only for testing:
-        //String queries = "select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Geography].[Geography].[All Geographies].[Australia].[New South Wales]},2,LEAVES) on axis(1) ,DESCENDANTS({[Date].[Calendar].[All Periods].[CY 2006].[H1 CY 2006].[Q1 CY 2006]},2,LEAVES) on axis(2) from [Adventure Works]";
-        //"select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Customer].[Education].[All Customers]},1,LEAVES) on axis(1) ,DESCENDANTS({[Date].[Calendar].[All Periods].[CY 2008]},4,LEAVES) on axis(2) from [Adventure Works]";
-        List<List<Long>>cubeOriginal = c.GetCubeData(finalMDXQueries.get(0).get(0));
-
-        HashMap<String,HashMap<String,Long>> resultSet =  this.CheckAndPopulateCache(cellOrdinalCombinations.get(0),new ArrayList<List<TreeNode>>(), cubeOriginal,isUserThread);// assuming only 1 query entry
-
-      // start this once the previous is done
+        // start this once the previous is done
         MDXUserQuery.allAxisDetails = allAxisDetails;
         MDXUserQuery.selectedMeasures = selectedMeasures;
         MDXUserQuery.measureMap = measureMap;
         MDXUserQuery.keyValPairsForDimension = keyValPairsForDimension;
         MDXUserQuery.cellOrdinalCombinations = cellOrdinalCombinations;
+        // start ASYNC THREAD
+        // uncomment this after serial test
+        //new DimensionTree().startAsyncThreads();
+
+
+        Cube c =  new Cube(QueryProcessor.olapServiceURL);
+
+        //only for testing:
+        //String queries = "select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Geography].[Geography].[All Geographies].[Australia].[New South Wales]},2,LEAVES) on axis(1) ,DESCENDANTS({[Date].[Calendar].[All Periods].[CY 2006].[H1 CY 2006].[Q1 CY 2006]},2,LEAVES) on axis(2) from [Adventure Works]";
+
+        //"select {[Measures].[Internet Sales Amount]} on axis(0), DESCENDANTS({[Customer].[Education].[All Customers]},1,LEAVES) on axis(1) ,DESCENDANTS({[Date].[Calendar].[All Periods].[CY 2008]},4,LEAVES) on axis(2) from [Adventure Works]";
+        List<List<Long>>cubeOriginal = c.GetCubeData(finalMDXQueries.get(0).get(0));
+        Log.d("Original Query", "download ends " + String.valueOf(System.currentTimeMillis()));
+        HashMap<String,HashMap<String,Long>> resultSet =  this.CheckAndPopulateCache(cellOrdinalCombinations.get(0),new ArrayList<List<TreeNode>>(), cubeOriginal,isUserThread);// assuming only 1 query entry
+
+
         Log.d("Original Query", "Query process ends " + String.valueOf(System.currentTimeMillis()));
         Log.d("Original Query","MDX query:"+ String.valueOf(finalMDXQueries.get(0).get(0)));
 
@@ -554,7 +571,7 @@ public class MDXQProcessor {
                         //update existing cache
                         String[] measureList = measure.replace("[", "").replace("]", "").split(",");
                         HashMap<String,Long> measureWiseResult = _updateMainCache(downloadedCube, totalSum, i, dimensionCombination, keyVal, measureList);
-                        resultSet.put(dimensionCombination, measureWiseResult);
+                        //resultSet.put(dimensionCombination, measureWiseResult);
                     }
                 }
 
@@ -571,9 +588,9 @@ public class MDXQProcessor {
                     String[] measureList = measure.replace("[", "").replace("]", "").split(",");
 
                     HashMap<String,Long> dummyRecords = _updateMainCache(null, totalSum, i, dimensionCombination, keyVal, measureList);
-                    if(isUserQuery) {
-                       resultSet.put(dimensionCombination,dummyRecords);
-                       }
+                   // if(isUserQuery) {
+                     //  resultSet.put(dimensionCombination,dummyRecords);
+                     //  }
                 }
             }
            /* if(parentEntiresPerAxis !=null && parentEntiresPerAxis.size()>0) {
@@ -591,55 +608,29 @@ public class MDXQProcessor {
     private HashMap<String,Long>  _updateMainCache(List<List<Long>> downloadedCube, HashMap<String, Long> totalSum, int i, String dimensionCombination, HashMap<Integer, Long> keyVal, String[] measureList) {
         HashMap<String,Long> measureWiseResult = new HashMap<>();
         long dummy = 0;
+        Long cellVal = downloadedCube.get(i).get(0);
         if (MainActivity.CachedDataCubes.containsKey(dimensionCombination)){//MainActivity.CachedDataCubes.containsKey(dimensionCombination)) {
             // measure list per axis
             for (int j = 0; j < measureList.length; j++) {
-                // for roll up operation: summing all leaf node values for its parent
-                if(totalSum.containsKey(measureList[j])){
-                    long sum = totalSum.get(measureList[j]);
-                    if(downloadedCube!=null) {
-                        sum += downloadedCube.get(i).get(0);
-                        totalSum.put(measureList[j], sum);
-                    }
-                }
-                else{
-                    if(downloadedCube!=null) {
-                        totalSum.put(measureList[j], downloadedCube.get(i).get(0));
-                    }
-                }
-                if(downloadedCube!=null) {
-                    MainActivity.CachedDataCubes.get(dimensionCombination).put(Integer.parseInt(measureList[j].trim()), downloadedCube.get(i).get(0));
-                }
+                String measureKey = measureList[j].trim();
 
+                if(downloadedCube!=null) {
+                    MainActivity.CachedDataCubes.get(dimensionCombination).put(Integer.parseInt(measureKey), cellVal);
+                }
             }
         } else {
             // measure list per axis
             for (int j = 0; j < measureList.length; j++) {
-
-                // for roll up operation: summing all leaf node values for its parent
-                if(totalSum.containsKey(measureList[j])){
-                    long sum = totalSum.get(measureList[j]);
-                    if(downloadedCube!=null) {
-                        sum += downloadedCube.get(i).get(0);
-                        totalSum.put(measureList[j], sum);
-                    }
-                }
-                else{
-                    if(downloadedCube!=null)
-                     totalSum.put(measureList[j], downloadedCube.get(i).get(0));
-                }
+                String measureKey = measureList[j].trim();
                 if(downloadedCube!=null) {
-                    keyVal.put(Integer.parseInt(measureList[j].trim()), downloadedCube.get(i).get(0));
-                    measureWiseResult.put(measureList[j].trim(), downloadedCube.get(i).get(0));
+                    keyVal.put(Integer.parseInt(measureKey), cellVal);
+                    //measureWiseResult.put(measureKey, cellVal);
                 }
                 else {
-                    measureWiseResult.put(measureList[j].trim(), dummy);
-                    keyVal.put(Integer.parseInt(measureList[j].trim()), dummy);
-
+                    //measureWiseResult.put(measureKey, dummy);
+                    keyVal.put(Integer.parseInt(measureKey), dummy);
                 }
-
             }
-
             MainActivity.CachedDataCubes.put(dimensionCombination,keyVal);
                    }
         return  measureWiseResult;
