@@ -46,7 +46,7 @@ public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryIn
                      MDXQObj.measureMap, MDXQObj.measureInput);
             isComplete = true;
             // remove this when done
-            new DimensionTree().executeSerially();
+           // new DimensionTree().executeSerially();
 
         } catch (Exception e) {
             e.printStackTrace();

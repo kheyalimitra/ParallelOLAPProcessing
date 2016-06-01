@@ -107,9 +107,9 @@ public class MDXQProcessor {
         MDXUserQuery.measureMap = measureMap;
         MDXUserQuery.keyValPairsForDimension = keyValPairsForDimension;
         MDXUserQuery.cellOrdinalCombinations = cellOrdinalCombinations;
-        // uncomment it after serial execution
 
-        //new DimensionTree().startAsyncThreads();
+
+        new DimensionTree().startAsyncThreads();
 
     }
 
@@ -251,8 +251,8 @@ public class MDXQProcessor {
         MDXUserQuery.keyValPairsForDimension = keyValPairsForDimension;
         MDXUserQuery.cellOrdinalCombinations = cellOrdinalCombinations;
         // start ASYNC THREAD
-        // uncomment this after serial test
-        //new DimensionTree().startAsyncThreads();
+
+        new DimensionTree().startAsyncThreads();
 
 
         Cube c =  new Cube(QueryProcessor.olapServiceURL);
