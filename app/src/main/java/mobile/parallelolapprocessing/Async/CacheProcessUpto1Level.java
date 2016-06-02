@@ -16,7 +16,7 @@ import mobile.parallelolapprocessing.CacheProcess;
 /**
  * Created by jayma on 2/28/2016.
  */
-public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Void,Void,String> {
+public class CacheProcessUpto1Level extends AsyncTask<Void,Void,String> {//implements Runnable{
     public List<List<List<Integer>>> allAxisDetails;
     public List<Integer> selectedMeasures;
     public HashMap<Integer, String> measureMap;
@@ -62,7 +62,7 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
         }
         return allLeaves;
     }
-    public void start ()
+   /* public void start ()
     {
         if (inflatedDataDnldThread == null)
         {
@@ -70,7 +70,7 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
             inflatedDataDnldThread.start ();
 
         }
-    }
+    }*/
     public void run() {
         try {
 
@@ -164,11 +164,11 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
     }
 
 
-//    @Override
-//    protected String doInBackground(Void... params) {
-//        this.run();
-//
-//        return "Success";
-//    }
+    @Override
+    protected String doInBackground(Void... params) {
+        this.run();
+
+        return "Success";
+    }
 
 }

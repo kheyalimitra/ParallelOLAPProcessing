@@ -286,14 +286,14 @@ public class DimensionTree extends Fragment{
            // start parallel thread to fetch inflated data for leaf levels
            CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
-            cache.start();
-            //cache.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            //cache.start();
+            cache.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
            // start another thread to fetch siblings data
             CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
-            cacheParentLevelObj.start();
-    //cacheParentLevelObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            //cacheParentLevelObj.start();
+    cacheParentLevelObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
        }
        catch(Exception e)
        {
@@ -553,18 +553,7 @@ public class DimensionTree extends Fragment{
             return newChildTreeNode;
     }
 
-public void executeSerially(){
-    CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
-            MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
 
-    cache.run();
-
-    // start another thread to fetch siblings data
-    CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
-            MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
-
-    cacheParentLevelObj.run();
-}
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu, menu);
