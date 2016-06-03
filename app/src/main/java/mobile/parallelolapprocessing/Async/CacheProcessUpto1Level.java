@@ -62,7 +62,7 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
         }
         return allLeaves;
     }
-    public void start ()
+    /*public void start ()
     {
         if (inflatedDataDnldThread == null)
         {
@@ -70,7 +70,7 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
             inflatedDataDnldThread.start ();
 
         }
-    }
+    }*/
     public void run() {
         try {
 
@@ -98,6 +98,7 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
 
                     mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated, false);// assuming only 1 query entry
                     Log.d("Inflated Query2", "Process ends  " + String.valueOf(System.currentTimeMillis()));
+
                 }
             }
         }

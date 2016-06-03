@@ -17,6 +17,7 @@ import mobile.parallelolapprocessing.Async.ParameterWrapper.MDXUserQueryInput;
 import mobile.parallelolapprocessing.CacheProcess;
 import mobile.parallelolapprocessing.DimensionTree;
 import mobile.parallelolapprocessing.MainActivity;
+import mobile.parallelolapprocessing.OriginaQuery;
 
 /**
  * Created by KheyaliMitra on 2/1/2016.
@@ -41,9 +42,10 @@ public class MDXUserQuery implements Runnable{//extends AsyncTask<MDXUserQueryIn
         try {
             //Standard priority of the most important display threads, for compositing the screen and retrieving input events.
 
-            Log.d("Original Query","Query process starts "+ String.valueOf(System.currentTimeMillis()));
+            Log.d("Original Query", "Query process starts " + String.valueOf(System.currentTimeMillis()));
              qp.GetUserRequestedData(MDXQObj.entryPerDimension, MDXQObj.rootDimensionTree, MDXQObj.DimensionInput, MDXQObj.measuresObj,
                      MDXQObj.measureMap, MDXQObj.measureInput);
+
             isComplete = true;
             // remove this when done
            // new DimensionTree().executeSerially();

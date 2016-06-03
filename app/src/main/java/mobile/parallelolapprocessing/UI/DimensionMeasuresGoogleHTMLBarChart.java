@@ -198,6 +198,7 @@ public class DimensionMeasuresGoogleHTMLBarChart implements IDimensionMeasureDis
                     sb.append("-1" + ",");
                 }
             }else{
+
                 sb.append("-2" + ",");
             }
         }

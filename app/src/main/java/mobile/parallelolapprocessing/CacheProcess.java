@@ -34,7 +34,7 @@ public class CacheProcess implements Runnable{//extends AsyncTask<Void,Void,Stri
     public HashMap<Integer, TreeNode> keyValPairsForDimension;
     public List<List<String>>cellOrdinalCombinations;
     public String olapServerURL;
-    private Thread inflatedDataDnldThread;
+
     public static List<String> inflatedQueries;
     private long start=0;
     List<List<TreeNode>> parentEntiresPerAxis;
@@ -135,7 +135,7 @@ public class CacheProcess implements Runnable{//extends AsyncTask<Void,Void,Stri
         return new CacheProcessUpto1Level().iterateTreeToGenerateChildren(parent);
 
     }
-    public void start ()
+   /* public void start ()
     {
         if (inflatedDataDnldThread == null)
         {
@@ -143,7 +143,7 @@ public class CacheProcess implements Runnable{//extends AsyncTask<Void,Void,Stri
             inflatedDataDnldThread.start ();
 
         }
-    }
+    }*/
 
     public void run() {
         try {
@@ -178,10 +178,5 @@ public class CacheProcess implements Runnable{//extends AsyncTask<Void,Void,Stri
         }
     }
 
-   // @Override
-   // protected String doInBackground(Void... params) {
-    //    this.run();
 
-   //     return "Success";
-   // }
 }

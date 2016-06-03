@@ -7,11 +7,11 @@ package mobile.parallelolapprocessing;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -27,29 +27,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.unnamed.b.atv.model.TreeNode;
 import com.unnamed.b.atv.view.AndroidTreeView;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-
-import DataRetrieval.Dimension;
-import MDXQueryProcessor.MDXQProcessor;
 import Processor.QueryProcessor;
 import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
-import mobile.parallelolapprocessing.Async.Call.DimensionHierarchy;
 import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
-import mobile.parallelolapprocessing.Async.Call.RootDimension;
 import mobile.parallelolapprocessing.Async.IconTreeItem;
 import mobile.parallelolapprocessing.Async.ParameterWrapper.MDXUserQueryInput;
-import mobile.parallelolapprocessing.UI.DimensionMeasureGoogleHTMLTable;
-import mobile.parallelolapprocessing.UI.IDimensionMeasureDisplay;
+
 
 public class DimensionTree extends Fragment{
 
@@ -262,14 +250,14 @@ public class DimensionTree extends Fragment{
             MDXObj.start();
             //MDXObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
-             while (!MDXUserQuery.isComplete) {
-                Thread.sleep(1);
+             while (!OriginaQuery.isDownloadFinished ) {
+                continue;
             }
             this.endTimer = System.currentTimeMillis();
 
             timeTaken = this.endTimer - this.startTimer;
             _populateListView(selectedQuery, this.endTimer - this.startTimer);
-
+            OriginaQuery.isDownloadFinished =  false;
 
 
 
@@ -281,41 +269,18 @@ public class DimensionTree extends Fragment{
     }
 
 
-    public void startAsyncThreads(){
-        try {
-           // start parallel thread to fetch inflated data for leaf levels
-           CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
-                   MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
-            cache.start();
-            //cache.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-
-           // start another thread to fetch siblings data
-            CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
-                   MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
-            cacheParentLevelObj.start();
-    //cacheParentLevelObj.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-       }
-       catch(Exception e)
-       {
-            String s = e.getMessage();
-       }
-  }
-
-
     private void _populateListView(ListView selectedQuery, long timeTaken) {
         // if result set has value, display it
-        if (QueryProcessor.resultSet.size()>0){
+        //if (QueryProcessor.resultSet.size()>0){
             //<Long> results = new ArrayList<Long>(QueryProcessor.resultSet.values());
-            List<String> newList = new ArrayList<String>();
-            //for (Long myInt : results) {
-             //   newList.add(String.valueOf(myInt));
-           // }
-            newList.add("total Time taken (ms): "+String.valueOf(timeTaken));
-            SimpleArrayAdapter a = new SimpleArrayAdapter(MainActivity.MainContext,newList);
-            //Sets Adapter
-            selectedQuery.setAdapter(a);
+            //List<String> newList = new ArrayList<String>();
 
-        }
+           // newList.add("total Time taken (ms): "+String.valueOf(timeTaken));
+            //SimpleArrayAdapter a = new SimpleArrayAdapter(MainActivity.MainContext,newList);
+            //Sets Adapter
+            //selectedQuery.setAdapter(a);
+
+        //}
         try {
             Intent intent = new Intent(MainActivity.MainContext, GoogleDisplayLogic.class);
             DimensionTree.this.startActivity(intent);
