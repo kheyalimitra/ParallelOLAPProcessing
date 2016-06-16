@@ -12,6 +12,8 @@ import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
 import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
 import mobile.parallelolapprocessing.CacheProcess;
 import mobile.parallelolapprocessing.DimensionTree;
+import mobile.parallelolapprocessing.Inflated1;
+import mobile.parallelolapprocessing.Inflated2;
 import mobile.parallelolapprocessing.MainActivity;
 import mobile.parallelolapprocessing.OriginaQuery;
 
@@ -25,6 +27,7 @@ import java.util.concurrent.Executors;
 public class MDXQProcessor {
     //this is the cached keys from previous queries
     public  static HashMap<String, Cube> CachedKeys =  new HashMap<>();
+    List<List<TreeNode>> parentEntiresPerAxis;
     public  Integer hitCount = 0;
     // this list keeps tract of last 10 user selection for dimensions, it will store the root dimension key
     // say Geography , Customer etc so that we can keep tract of user trac ( under which dimension he/she is)
@@ -255,7 +258,7 @@ public class MDXQProcessor {
     }
     public void startAsyncThreads(String query){
         try {
-            ExecutorService executor = Executors.newFixedThreadPool(3);
+            ExecutorService executor = Executors.newFixedThreadPool(4);
             if(query !="Blank") {
                 OriginaQuery.isDownloadFinished = false;
                 OriginaQuery originalQObj = new OriginaQuery(query);
@@ -264,23 +267,79 @@ public class MDXQProcessor {
             else{
                 OriginaQuery.isDownloadFinished =  true;
             }
+            List<List<HashMap<Integer, TreeNode>>> allLeaves = getLeavesPerAxis(MDXUserQuery.keyValPairsForDimension, MDXUserQuery.allAxisDetails.get(0));
+
             // start parallel thread to fetch inflated data for leaf levels
-            CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
-                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
-            executor.execute(cache);
-            //cache.start();
+//            CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+//                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+//            executor.execute(cache);
+            Inflated1 in1 = new Inflated1(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis);
+            executor.execute(in1);
+            Inflated2 in2 = new Inflated2(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis);
+            executor.execute(in2);
             // start another thread to fetch siblings data
             CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                     MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
             executor.execute(cacheParentLevelObj);
-            // cacheParentLevelObj.start();
-            //executor.shutdown();
+
 
         }
         catch(Exception e)
         {
             String s = e.getMessage();
         }
+    }
+    public List<List<HashMap<Integer, TreeNode>>>getLeavesPerAxis(HashMap<Integer, TreeNode> keyValPairsForDimension,
+                                                                  List<List<Integer>> allAxisDetails) {
+        List<List<HashMap<Integer, TreeNode>> > Leaves = new ArrayList<>();
+        this.parentEntiresPerAxis =  new ArrayList<>();
+        for (int i = 1; i < allAxisDetails.size(); i++)// 0 th entry is for measures
+        {
+            List<TreeNode> parents = new ArrayList<>();
+            List<HashMap<Integer, TreeNode>> axisWiseList = new ArrayList<>();
+            for (int j = 0; j < allAxisDetails.get(i).size(); j++) {
+
+                TreeNode child = keyValPairsForDimension.get(allAxisDetails.get(i).get(j));
+                if (child != null) {
+                    List<TreeNode> children = child.getChildren();
+                    if(children!=null && children.size()==0)
+                    {
+                        // 1st time this is running and the parent node itself is leaf node:
+                        // then go back 1 level up and run for its parent
+                        child = child.getParent();
+
+                    }
+                    else{
+                        // the following section deals with situations like: Education. All Customers.  We know that the server will send values for all under 'All custmers' sections
+                        // so if we go to its parent that is Education, its children will be 'All customers' which must be replaced by all those children under it.
+                        // Education.Children--> All customers but we need Bachelors, Hgh School  Graduates etc
+
+                        if(children!=null && children.size()>0 && children.size()<=1) {
+                            String childName = children.get(0).getReference().toString();
+                            if (!childName.contains("All")) {
+                                child = child.getParent();
+                            } else {
+                                child = children.get(0);
+
+                            }
+                        }
+                    }
+
+                    HashMap<Integer,TreeNode> allLeaves = getLeaves(child);
+                    axisWiseList.add(allLeaves);
+                }
+            }
+            Leaves.add(axisWiseList);
+            parentEntiresPerAxis.add(parents);
+        }
+        return Leaves;
+    }
+    public  HashMap<Integer,TreeNode> getLeaves(TreeNode parent){
+
+        return new CacheProcessUpto1Level().iterateTreeToGenerateChildren(parent);
+
     }
 
 

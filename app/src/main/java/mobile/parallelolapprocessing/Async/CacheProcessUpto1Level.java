@@ -90,14 +90,14 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
                         keyValPairsForDimension, true, true);
                 if(!CacheProcessUpto1Level.inflatedQueries.contains(queryListForSiblings.get(0)) && !CacheProcess.inflatedQueries.contains(queryListForSiblings.get(0))) {
                    CacheProcessUpto1Level.inflatedQueries.add(queryListForSiblings.get(0));
-                    Log.d("Inflated Query2", "Start data download  " + String.valueOf(System.currentTimeMillis()));
-                    Log.d("Inflated Query2", "MDX query:" + String.valueOf(queryListForSiblings.get(0)));
+                    Log.d("Inflated Query3", "Start data download  " + String.valueOf(System.currentTimeMillis()));
+                    Log.d("Inflated Query3", "MDX query:" + String.valueOf(queryListForSiblings.get(0)));
 
                     List<List<Long>> cubeInflated = c.GetCubeData(CacheProcessUpto1Level.inflatedQueries.get(CacheProcessUpto1Level.inflatedQueries.size()-1));// since last entry is the current one
-                    Log.d("Inflated Query2", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
+                    Log.d("Inflated Query3", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
 
                     mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated, false);// assuming only 1 query entry
-                    Log.d("Inflated Query2", "Process ends  " + String.valueOf(System.currentTimeMillis()));
+                    Log.d("Inflated Query3", "Process ends  " + String.valueOf(System.currentTimeMillis()));
 
                 }
             }

@@ -235,7 +235,7 @@ public class DimensionTree extends Fragment{
         int [] entryPerDimension =new int[result.length] ;
         int i=0;
         for (String str : result)
-            entryPerDimension[i++] = Integer.parseInt(str);
+            entryPerDimension[i++] = Integer.parseInt(str.trim());
 
         DataRetrieval.Measures measuresObj = new DataRetrieval.Measures(QueryProcessor.olapServiceURL);//pass url
         MDXUserQueryInput mdxInputObj = new MDXUserQueryInput(entryPerDimension, MainActivity.DimensionTreeNode,dimensions,
