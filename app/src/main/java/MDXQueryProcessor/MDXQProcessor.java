@@ -26,7 +26,7 @@ public class MDXQProcessor {
     //this is the cached keys from previous queries
     public  static HashMap<String, Cube> CachedKeys =  new HashMap<>();
     List<List<TreeNode>> parentEntiresPerAxis;
-    public static HashSet<String> inflatedQueries;
+
     // this list keeps tract of last 10 user selection for dimensions, it will store the root dimension key
     // say Geography , Customer etc so that we can keep tract of user trac ( under which dimension he/she is)
     // will be used when flushing cache

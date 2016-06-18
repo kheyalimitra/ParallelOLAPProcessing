@@ -25,6 +25,7 @@ public class Inflated1 implements Runnable{
     public List<List<String>>cellOrdinalCombinations;
     public String olapServerURL;
     public List<Boolean> isAddChildrenToDimension;
+    public static HashSet<String> inflatedQueries;
     private long start=0;
     List<List<HashMap<Integer, TreeNode>>> allLeaves;
     List<List<TreeNode>> parentEntiresPerAxis;
@@ -43,9 +44,22 @@ public class Inflated1 implements Runnable{
         instatiateOtherThreads();
     }
     public void instatiateOtherThreads(){
-        if(MDXQProcessor.inflatedQueries == null)
+        if(inflatedQueries == null)
         {
-            MDXQProcessor.inflatedQueries = new HashSet<>();
+            inflatedQueries = new HashSet<>();
+        }
+
+        if(Inflated3.inflatedQueries == null)
+        {
+            Inflated3.inflatedQueries = new HashSet<>();
+        }
+        if(Inflated2.inflatedQueries == null)
+        {
+            Inflated2.inflatedQueries = new HashSet<>();
+        }
+        if(CacheProcessUpto1Level.inflatedQueries == null)
+        {
+            CacheProcessUpto1Level.inflatedQueries = new HashSet<>();
         }
     }
     private List<List<List<Integer>>> generateNewAxisDetails(List<List<HashMap<Integer, TreeNode>>> allLeaves, List<List<List<Integer>>> allAxisDetails) {
@@ -110,14 +124,17 @@ public class Inflated1 implements Runnable{
 
             List<String> queryListForChildren = _generateQueryString(allAxisDetails, selectedMeasures, measureMap,
                     keyValPairsForDimension, true, false);
-            synchronized (MDXQProcessor.inflatedQueries) {
-                if (!MDXQProcessor.inflatedQueries.contains(queryListForChildren.get(0))) {
+
+            if (!inflatedQueries.contains(queryListForChildren.get(0)) &&
+                    !Inflated3.inflatedQueries.contains(queryListForChildren.get(0)) &&
+                    !Inflated2.inflatedQueries.contains(queryListForChildren.get(0)) &&
+                    !CacheProcessUpto1Level.inflatedQueries.contains(queryListForChildren.get(0))){
                     int queryCount = allAxisDetails.size();
                     for (int i = 0; i < queryCount; i++) {
                         cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
                     }
                     Log.d("Inflated Query1", "Start data download  " + String.valueOf(System.currentTimeMillis()));
-                    MDXQProcessor.inflatedQueries.add(queryListForChildren.get(0));
+                    inflatedQueries.add(queryListForChildren.get(0));
                     Log.d("Inflated Query1", "MDX query: " + String.valueOf(queryListForChildren.get(0)));
                     List<List<Long>> cubeInflated = c.GetCubeData(queryListForChildren.get(0));
                     Log.d("Inflated Query1", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
@@ -125,7 +142,7 @@ public class Inflated1 implements Runnable{
                     Log.d("Inflated Query1", "process ends " + String.valueOf(System.currentTimeMillis()));
                 }
             }
-        }
+
         catch(Exception e) {
             String ex = e.getMessage();
         }

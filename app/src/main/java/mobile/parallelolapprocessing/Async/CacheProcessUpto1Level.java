@@ -16,6 +16,9 @@ import MDXQueryProcessor.MDXQProcessor;
 
 import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
 import mobile.parallelolapprocessing.CacheProcess;
+import mobile.parallelolapprocessing.Inflated1;
+import mobile.parallelolapprocessing.Inflated2;
+import mobile.parallelolapprocessing.Inflated3;
 
 /**
  * Created by jayma on 2/28/2016.
@@ -30,6 +33,7 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
     private Thread inflatedDataDnldThread;
     private List<List<HashMap<Integer, TreeNode>>> allParents;
     List<List<TreeNode>> parentEntiresPerAxis;
+    public static HashSet<String> inflatedQueries;
     public CacheProcessUpto1Level(List<List<List<Integer>>> allAxisDetails, List<Integer> selectedMeasures, HashMap<Integer, String> measureMap,
                         HashMap<Integer, TreeNode> keyValPairsForDimension, List<List<String>> cellOrdinalCombinations, String olapURL, List<List<HashMap<Integer, TreeNode>>> allParents)
     {
@@ -40,9 +44,24 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
         this.cellOrdinalCombinations = cellOrdinalCombinations;
         this.olapServerURL = olapURL;
         this.allParents =  allParents;
-        if(MDXQProcessor.inflatedQueries == null)
+        instatiateOtherThreads();
+    }
+    public void instatiateOtherThreads(){
+        if(inflatedQueries == null)
         {
-            MDXQProcessor.inflatedQueries = new HashSet<>();
+            inflatedQueries = new HashSet<>();
+        }
+        if(Inflated1.inflatedQueries == null)
+        {
+            Inflated1.inflatedQueries = new HashSet<>();
+        }
+        if(Inflated2.inflatedQueries == null)
+        {
+            Inflated2.inflatedQueries = new HashSet<>();
+        }
+        if(Inflated3.inflatedQueries == null)
+        {
+            Inflated3.inflatedQueries = new HashSet<>();
         }
     }
     public void run() {
@@ -55,9 +74,13 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
                 List<List<String>> cellOrdinalCombinations = new ArrayList<>();
                 List<String> queryListForSiblings = _generateQueryString(allAxisDetails, selectedMeasures, measureMap,
                         keyValPairsForDimension);
-                synchronized (MDXQProcessor.inflatedQueries) {
-                    if (!MDXQProcessor.inflatedQueries.contains(queryListForSiblings.get(0))) {
-                        MDXQProcessor.inflatedQueries.add(queryListForSiblings.get(0));
+
+                    if (!inflatedQueries.contains(queryListForSiblings.get(0)) &&
+                            !Inflated1.inflatedQueries.contains(queryListForSiblings.get(0)) &&
+                            !Inflated2.inflatedQueries.contains(queryListForSiblings.get(0)) &&
+                            !Inflated3.inflatedQueries.contains(queryListForSiblings.get(0))) {
+                        inflatedQueries.add(queryListForSiblings.get(0));
+
                         int queryCount = allAxisDetails.size();
                         for (int i = 0; i < queryCount; i++) {
                             cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
@@ -72,7 +95,7 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
 
                     }
                 }
-            }
+
         }
         catch(Exception e) {
             String ex = e.getMessage();

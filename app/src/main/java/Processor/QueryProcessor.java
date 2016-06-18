@@ -13,6 +13,9 @@ import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
 import mobile.parallelolapprocessing.CacheProcess;
 import mobile.parallelolapprocessing.DimensionTree;
 import mobile.parallelolapprocessing.GoogleDisplayLogic;
+import mobile.parallelolapprocessing.Inflated1;
+import mobile.parallelolapprocessing.Inflated2;
+import mobile.parallelolapprocessing.Inflated3;
 import mobile.parallelolapprocessing.MainActivity;
 import mobile.parallelolapprocessing.UI.DimensionMeasureGoogleHTMLTable;
 
@@ -127,7 +130,10 @@ public class QueryProcessor {
             if(MainActivity.CachedDataCubes.size()>0) {
                 MainActivity.CachedDataCubes.clear();
                 MDXQProcessor.lastTenSelectedDimensions.clear();
-                MDXQProcessor.inflatedQueries.clear();
+                Inflated1.inflatedQueries.clear();
+                Inflated2.inflatedQueries.clear();
+                Inflated3.inflatedQueries.clear();
+                CacheProcessUpto1Level.inflatedQueries.clear();
                 System.gc();
             }
         }
