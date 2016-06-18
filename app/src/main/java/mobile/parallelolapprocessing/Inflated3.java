@@ -14,9 +14,9 @@ import MDXQueryProcessor.MDXQProcessor;
 import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
 
 /**
- * Created by KheyaliMitra on 6/16/2016.
+ * Created by KheyaliMitra on 6/17/2016.
  */
-public class Inflated1 implements Runnable{
+public class Inflated3 implements Runnable{
 
     public List<List<List<Integer>>> allAxisDetails;
     public List<Integer> selectedMeasures;
@@ -28,8 +28,8 @@ public class Inflated1 implements Runnable{
     private long start=0;
     List<List<HashMap<Integer, TreeNode>>> allLeaves;
     List<List<TreeNode>> parentEntiresPerAxis;
-    public Inflated1(List<List<List<Integer>>> allAxisDetails, List<Integer> selectedMeasures, HashMap<Integer, String> measureMap,
-                        HashMap<Integer, TreeNode> keyValPairsForDimension, List<List<String>> cellOrdinalCombinations, String olapURL, List<List<HashMap<Integer, TreeNode>>> allLeaves,List<List<TreeNode>> parentEntiresPerAxis)
+    public Inflated3(List<List<List<Integer>>> allAxisDetails, List<Integer> selectedMeasures, HashMap<Integer, String> measureMap,
+                     HashMap<Integer, TreeNode> keyValPairsForDimension, List<List<String>> cellOrdinalCombinations, String olapURL, List<List<HashMap<Integer, TreeNode>>> allLeaves,List<List<TreeNode>> parentEntiresPerAxis)
     {
         this.allAxisDetails = allAxisDetails;
         this.selectedMeasures =selectedMeasures;
@@ -48,52 +48,23 @@ public class Inflated1 implements Runnable{
             MDXQProcessor.inflatedQueries = new HashSet<>();
         }
     }
-    private List<List<List<Integer>>> generateNewAxisDetails(List<List<HashMap<Integer, TreeNode>>> allLeaves, List<List<List<Integer>>> allAxisDetails) {
+       private List<List<List<Integer>>> generateNewAxisDetails(List<List<HashMap<Integer, TreeNode>>> allLeaves, List<List<List<Integer>>> allAxisDetails) {
         List<List<List<Integer>>> newAxisDetails= new ArrayList<>();
         List<List<Integer>> newAxis= new ArrayList<>();
-
         //Add measures to the first axis
         newAxis.add(allAxisDetails.get(0).get(0));
-        int dimenAxis =1;
         int leavesSize = allLeaves.size();
-        if(leavesSize>1) {
-            int halfSize = (int)Math.floor(leavesSize/2);
-            for (int i = 0; i <halfSize; i++) {
-                //Individual axis
-                List<HashMap<Integer, TreeNode>> axis = allLeaves.get(i);
-                List<Integer> dimensionList = new ArrayList<>();
-                for (int j = 0; j < axis.size(); j++) {
-                    dimensionList.addAll(axis.get(j).keySet());
-                }
-                dimensionList.addAll(allAxisDetails.get(0).get(dimenAxis++));
-
-                newAxis.add(dimensionList);
-                isAddChildrenToDimension.add(true);
+        for (int i = 0; i <leavesSize; i++) {
+            //Individual axis
+            List<HashMap<Integer, TreeNode>> axis = allLeaves.get(i);
+            List<Integer> dimensionList = new ArrayList<>();
+            for (int j = 0; j < axis.size(); j++) {
+                dimensionList.addAll(axis.get(j).keySet());
             }
-            for (int i = halfSize; i <leavesSize; i++) {
-
-                List<Integer> dimensionList = new ArrayList<>();
-                dimensionList.addAll(allAxisDetails.get(0).get(dimenAxis++));
-                //dimensionList.addAll(allAxisDetails.get(0).get(dimenAxis++));
-                newAxis.add(dimensionList);
-                isAddChildrenToDimension.add(false);
-            }
+            newAxis.add(dimensionList);
+            isAddChildrenToDimension.add(true);
         }
-        else{
-            for (int i = 0; i <leavesSize; i++) {
-
-                List<Integer> dimensionList = new ArrayList<>();
-                dimensionList.addAll(allAxisDetails.get(0).get(dimenAxis++));
-                //dimensionList.addAll(allAxisDetails.get(0).get(dimenAxis++));
-                newAxis.add(dimensionList);
-                isAddChildrenToDimension.add(false);
-            }
-        }
-
         newAxisDetails.add(newAxis);
-
-
-
         return newAxisDetails;
     }
 
@@ -107,22 +78,22 @@ public class Inflated1 implements Runnable{
             List<List<List<Integer>>> newAxisDetails = generateNewAxisDetails(allLeaves, allAxisDetails);
             List<List<String>> cellOrdinalCombinations = new ArrayList<>();
 
-
-            List<String> queryListForChildren = _generateQueryString(allAxisDetails, selectedMeasures, measureMap,
-                    keyValPairsForDimension, true, false);
+            List<String>  queryListForChildren  = _generateQueryString(allAxisDetails, selectedMeasures, measureMap,
+                    keyValPairsForDimension, true,false);
             synchronized (MDXQProcessor.inflatedQueries) {
                 if (!MDXQProcessor.inflatedQueries.contains(queryListForChildren.get(0))) {
                     int queryCount = allAxisDetails.size();
                     for (int i = 0; i < queryCount; i++) {
                         cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
                     }
-                    Log.d("Inflated Query1", "Start data download  " + String.valueOf(System.currentTimeMillis()));
+
+                    Log.d("Inflated Query3", "Start data download  " + String.valueOf(System.currentTimeMillis()));
                     MDXQProcessor.inflatedQueries.add(queryListForChildren.get(0));
-                    Log.d("Inflated Query1", "MDX query: " + String.valueOf(queryListForChildren.get(0)));
+                    Log.d("Inflated Query3", "MDX query: " + String.valueOf(queryListForChildren.get(0)));
                     List<List<Long>> cubeInflated = c.GetCubeData(queryListForChildren.get(0));
-                    Log.d("Inflated Query1", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
+                    Log.d("Inflated Query3", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
                     mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated, false);// assuming only 1 query entry
-                    Log.d("Inflated Query1", "process ends " + String.valueOf(System.currentTimeMillis()));
+                    Log.d("Inflated Query3", "process ends " + String.valueOf(System.currentTimeMillis()));
                 }
             }
         }
@@ -130,7 +101,7 @@ public class Inflated1 implements Runnable{
             String ex = e.getMessage();
         }
     }
-    private List<String> _generateQueryString(List<List<List<Integer>>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
+    private List<String>_generateQueryString(List<List<List<Integer>>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
                                             HashMap<Integer,TreeNode> keyValPairsForDimension, boolean isAddDescendant,boolean isAddInflatedSiblings ){
         int nQueryCount =queryDetails.size();
         List<String> subQueries =  new ArrayList<>();
@@ -140,7 +111,7 @@ public class Inflated1 implements Runnable{
             subQueries.add(querystring);
 
         }
-         return subQueries;
+        return subQueries;
     }
 
     private String _generateSubQueryString(List<List<Integer>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
@@ -174,30 +145,17 @@ public class Inflated1 implements Runnable{
                 if (isAddChildrenToDimension.get(i-1)) {// since it is not capturing measures details in this list
                     dimensionName += ".children";
                 }
-                    if(!dimensionList.contains(dimensionName)) {
-                            dimensionList.add(dimensionName);
-                    }
+                if(!dimensionList.contains(dimensionName))
+                    dimensionList.add(dimensionName);
 
             }
+              axisWiseQuery.add("{" + TextUtils.join(",", dimensionList) + "} on axis(" + (i) + ") ");
 
-            if(isAddChildrenToDimension.get(i-1) && !isFindSiblings){
-                // adding original combinations along with its leaves so that it has both  Education X2005 and EducationX2005.H2 EducationX2005.H3
-
-                    for(int j=0;j<originalDimensions.size();j++){
-                        dimensionList.add(originalDimensions.get(j));
-                    }
-
-                axisWiseQuery.add("{" + TextUtils.join(",", dimensionList) + "} on axis(" + (i) + ") ");//+ distance +
-
-
-            }
-            else {
-                axisWiseQuery.add("{" + TextUtils.join(",", dimensionList) + "} on axis(" + (i) + ") ");
-            }
         }
         String sqlStatement = mdxQ.generateSubQuery(axisWiseQuery);
         return sqlStatement;
     }
+
 
 
 

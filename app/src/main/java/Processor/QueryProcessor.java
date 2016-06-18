@@ -127,8 +127,7 @@ public class QueryProcessor {
             if(MainActivity.CachedDataCubes.size()>0) {
                 MainActivity.CachedDataCubes.clear();
                 MDXQProcessor.lastTenSelectedDimensions.clear();
-                CacheProcess.inflatedQueries.clear();
-                CacheProcessUpto1Level.inflatedQueries.clear();
+                MDXQProcessor.inflatedQueries.clear();
                 System.gc();
             }
         }

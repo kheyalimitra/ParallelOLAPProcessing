@@ -5,6 +5,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import DataRetrieval.Cube;
@@ -24,7 +25,6 @@ public class Inflated2 implements Runnable{
     public List<List<String>>cellOrdinalCombinations;
     public String olapServerURL;
     public List<Boolean> isAddChildrenToDimension;
-    public static List<String> inflatedQueries;
     private long start=0;
     List<List<HashMap<Integer, TreeNode>>> allLeaves;
     List<List<TreeNode>> parentEntiresPerAxis;
@@ -43,17 +43,12 @@ public class Inflated2 implements Runnable{
         instatiateOtherThreads();
     }
     public void instatiateOtherThreads(){
-        if(CacheProcess.inflatedQueries == null)
+        if(MDXQProcessor.inflatedQueries == null)
         {
-            CacheProcess.inflatedQueries = new ArrayList<>();
+            MDXQProcessor.inflatedQueries = new HashSet<>();
         }
-        if(CacheProcessUpto1Level.inflatedQueries == null)
-        {
-            CacheProcessUpto1Level.inflatedQueries = new ArrayList<>();
-        }
-        inflatedQueries = new ArrayList<>();
     }
-    public List<List<List<Integer>>> generateNewAxisDetails(List<List<HashMap<Integer, TreeNode>>> allLeaves, List<List<List<Integer>>> allAxisDetails) {
+    private List<List<List<Integer>>> generateNewAxisDetails(List<List<HashMap<Integer, TreeNode>>> allLeaves, List<List<List<Integer>>> allAxisDetails) {
         List<List<List<Integer>>> newAxisDetails= new ArrayList<>();
         List<List<Integer>> newAxis= new ArrayList<>();
 
@@ -67,7 +62,6 @@ public class Inflated2 implements Runnable{
 
                 List<Integer> dimensionList = new ArrayList<>();
                 dimensionList.addAll(allAxisDetails.get(0).get(dimenAxis++));
-                //dimensionList.addAll(allAxisDetails.get(0).get(dimenAxis++));
                 newAxis.add(dimensionList);
                 isAddChildrenToDimension.add(false);
             }
@@ -114,33 +108,33 @@ public class Inflated2 implements Runnable{
 
             Cube c = new Cube(olapServerURL);
             MDXQProcessor mdxQ = new MDXQProcessor();
-
-            //List<List<HashMap<Integer, TreeNode>>> allLeaves = getLeavesPerAxis(keyValPairsForDimension, allAxisDetails.get(0));
             List<List<List<Integer>>> newAxisDetails = generateNewAxisDetails(allLeaves, allAxisDetails);
             List<List<String>> cellOrdinalCombinations = new ArrayList<>();
-            int queryCount = allAxisDetails.size();
-            for (int i = 0; i < queryCount; i++) {
-                cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
-            }
 
-            List<String>  queryListForChildren  = GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
-                    keyValPairsForDimension, true,false);
-            if(!CacheProcessUpto1Level.inflatedQueries.contains(queryListForChildren.get(0)) && !inflatedQueries.contains(queryListForChildren.get(0)))
-            {
-                Log.d("Inflated Query2", "Start data download  " + String.valueOf(System.currentTimeMillis()));
-                inflatedQueries.add(queryListForChildren.get(0));
-                Log.d("Inflated Query2", "MDX query: " + String.valueOf(queryListForChildren.get(0)));
-                List<List<Long>> cubeInflated = c.GetCubeData(queryListForChildren.get(0));
-                Log.d("Inflated Query2", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
-                mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated, false);// assuming only 1 query entry
-                Log.d("Inflated Query2", "process ends " + String.valueOf(System.currentTimeMillis()));
+
+            List<String>  queryListForChildren  = _generateQueryString(allAxisDetails, selectedMeasures, measureMap,
+                    keyValPairsForDimension, true, false);
+            synchronized (MDXQProcessor.inflatedQueries) {
+                if (!MDXQProcessor.inflatedQueries.contains(queryListForChildren.get(0))) {
+                    int queryCount = allAxisDetails.size();
+                    for (int i = 0; i < queryCount; i++) {
+                        cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
+                    }
+                    Log.d("Inflated Query2", "Start data download  " + String.valueOf(System.currentTimeMillis()));
+                    MDXQProcessor.inflatedQueries.add(queryListForChildren.get(0));
+                    Log.d("Inflated Query2", "MDX query: " + String.valueOf(queryListForChildren.get(0)));
+                    List<List<Long>> cubeInflated = c.GetCubeData(queryListForChildren.get(0));
+                    Log.d("Inflated Query2", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
+                    mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated, false);// assuming only 1 query entry
+                    Log.d("Inflated Query2", "process ends " + String.valueOf(System.currentTimeMillis()));
+                }
             }
         }
         catch(Exception e) {
             String ex = e.getMessage();
         }
     }
-    public List<String> GenerateQueryString(List<List<List<Integer>>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
+    private List<String> _generateQueryString(List<List<List<Integer>>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
                                             HashMap<Integer,TreeNode> keyValPairsForDimension, boolean isAddDescendant,boolean isAddInflatedSiblings ){
         int nQueryCount =queryDetails.size();
         List<String> subQueries =  new ArrayList<>();
@@ -156,7 +150,8 @@ public class Inflated2 implements Runnable{
     private String _generateSubQueryString(List<List<Integer>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
                                            HashMap<Integer,TreeNode> keyValPairsForDimension, boolean isAddDescendant,boolean isFindSiblings ){
 
-        String sqlMeasureStatement = this._generateQueryForMeasures(selectedMeasures, measureMap);
+        MDXQProcessor mdxQ = new MDXQProcessor();
+        String sqlMeasureStatement = mdxQ.generateQueryForMeasures(selectedMeasures, measureMap);
         int axisCount =queryDetails.size();
         List<String> axisWiseQuery =  new ArrayList<>();
         axisWiseQuery.add(sqlMeasureStatement);
@@ -184,8 +179,9 @@ public class Inflated2 implements Runnable{
                 if (isAddChildrenToDimension.get(i-1)) {// since it is not capturing measures details in this list
                     dimensionName += ".children";
                 }
-
-                dimensionList.add(dimensionName);
+                if(!dimensionList.contains(dimensionName)) {
+                    dimensionList.add(dimensionName);
+                }
 
             }
 
@@ -204,29 +200,10 @@ public class Inflated2 implements Runnable{
                 axisWiseQuery.add("{" + TextUtils.join(",", dimensionList) + "} on axis(" + (i) + ") ");
             }
         }
-        String sqlStatement = this._generateSubQuery(axisWiseQuery);
+        String sqlStatement = mdxQ.generateSubQuery(axisWiseQuery);
         return sqlStatement;
     }
 
-    // generating sub-query
-    private String _generateSubQuery(List<String> hierarchies) {
-        String query = "select {";
-        query += TextUtils.join(",", hierarchies);
-        query += "from [Adventure Works]";
-        query.replace("&", "ampersand");
-        return query;
-    }
-    private String _generateQueryForMeasures(List<Integer>measures,HashMap<Integer,String> measureMap){
-        String sqlStatement = "";
-        List<String> members=new ArrayList<String>();
 
-        for (int i = 0; i < measures.size(); i++) {
-            String val = measureMap.get(measures.get(i));
-            //Maintaining MDX query structure
-            members.add("[Measures].[" + val + "]");
-        }
-        sqlStatement += TextUtils.join(",",members) + "} on axis(0) ";// String.join does not work in android studio
-        return  sqlStatement;
-    }
 
 }

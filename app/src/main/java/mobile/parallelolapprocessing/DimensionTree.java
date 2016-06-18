@@ -518,7 +518,7 @@ public class DimensionTree extends Fragment{
             return newChildTreeNode;
     }
 
-public void executeSerially(){
+/*public void executeSerially(){
     CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
             MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
 
@@ -529,7 +529,7 @@ public void executeSerially(){
             MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
 
     cacheParentLevelObj.run();
-}
+}*/
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu, menu);

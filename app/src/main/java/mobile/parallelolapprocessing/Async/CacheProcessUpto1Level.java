@@ -1,16 +1,20 @@
 package mobile.parallelolapprocessing.Async;
 
 import android.os.AsyncTask;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import DataRetrieval.Cube;
 import DataStructure.TreeNode;
 import MDXQueryProcessor.MDXQProcessor;
 
+import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
 import mobile.parallelolapprocessing.CacheProcess;
 
 /**
@@ -24,11 +28,10 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
     public List<List<String>>cellOrdinalCombinations;
     public String olapServerURL;
     private Thread inflatedDataDnldThread;
-    public static List<String> inflatedQueries;
-    private long start=0;
+    private List<List<HashMap<Integer, TreeNode>>> allParents;
     List<List<TreeNode>> parentEntiresPerAxis;
     public CacheProcessUpto1Level(List<List<List<Integer>>> allAxisDetails, List<Integer> selectedMeasures, HashMap<Integer, String> measureMap,
-                        HashMap<Integer, TreeNode> keyValPairsForDimension, List<List<String>> cellOrdinalCombinations, String olapURL)
+                        HashMap<Integer, TreeNode> keyValPairsForDimension, List<List<String>> cellOrdinalCombinations, String olapURL, List<List<HashMap<Integer, TreeNode>>> allParents)
     {
         this.allAxisDetails = allAxisDetails;
         this.selectedMeasures =selectedMeasures;
@@ -36,69 +39,38 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
         this.keyValPairsForDimension = keyValPairsForDimension;
         this.cellOrdinalCombinations = cellOrdinalCombinations;
         this.olapServerURL = olapURL;
-    }
-    public CacheProcessUpto1Level()
-    {
-        if(CacheProcessUpto1Level.inflatedQueries == null)
+        this.allParents =  allParents;
+        if(MDXQProcessor.inflatedQueries == null)
         {
-            CacheProcessUpto1Level.inflatedQueries = new ArrayList<>();
-        }
-        if(CacheProcess.inflatedQueries == null)
-        {
-            CacheProcess.inflatedQueries = new ArrayList<>();
+            MDXQProcessor.inflatedQueries = new HashSet<>();
         }
     }
-
-    public HashMap<Integer,TreeNode> iterateTreeToGenerateChildren(TreeNode parent) {
-        HashMap<Integer,TreeNode> allLeaves=new HashMap<>();
-        List<TreeNode> children = parent.getChildren();
-        if (children.size() == 0) {
-            allLeaves.put(parent.getNodeCounter(),parent);
-
-        } else {
-            for (int i = 0; i < children.size(); i++) {
-                allLeaves.put(children.get(i).getNodeCounter(),children.get(i));
-            }
-        }
-        return allLeaves;
-    }
-    /*public void start ()
-    {
-        if (inflatedDataDnldThread == null)
-        {
-            inflatedDataDnldThread =new Thread (this);
-            inflatedDataDnldThread.start ();
-
-        }
-    }*/
     public void run() {
         try {
 
             Cube c = new Cube(olapServerURL);
             MDXQProcessor mdxQ = new MDXQProcessor();
-            CacheProcess cpObj = new CacheProcess();
-            List<List<HashMap<Integer, TreeNode>>> allLeaves = _getSiblingsPerAxis(keyValPairsForDimension, allAxisDetails.get(0));
-            if(allLeaves.size()>0) {
-                List<List<List<Integer>>> newAxisDetails = cpObj.generateNewAxisDetails(allLeaves, allAxisDetails);
+            if(allParents.size()>0) {
+                List<List<List<Integer>>> newAxisDetails = generateNewAxisDetails(allParents, allAxisDetails);
                 List<List<String>> cellOrdinalCombinations = new ArrayList<>();
-                int queryCount = allAxisDetails.size();
-                for (int i = 0; i < queryCount; i++) {
-                    cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
-                }
+                List<String> queryListForSiblings = _generateQueryString(allAxisDetails, selectedMeasures, measureMap,
+                        keyValPairsForDimension);
+                synchronized (MDXQProcessor.inflatedQueries) {
+                    if (!MDXQProcessor.inflatedQueries.contains(queryListForSiblings.get(0))) {
+                        MDXQProcessor.inflatedQueries.add(queryListForSiblings.get(0));
+                        int queryCount = allAxisDetails.size();
+                        for (int i = 0; i < queryCount; i++) {
+                            cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
+                        }
+                        Log.d("Inflated Query4", "Start data download  " + String.valueOf(System.currentTimeMillis()));
+                        Log.d("Inflated Query4", "MDX query:" + String.valueOf(queryListForSiblings.get(0)));
 
-                List<String>  queryListForSiblings = mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
-                        keyValPairsForDimension, true, true);
-                if(!CacheProcessUpto1Level.inflatedQueries.contains(queryListForSiblings.get(0)) && !CacheProcess.inflatedQueries.contains(queryListForSiblings.get(0))) {
-                   CacheProcessUpto1Level.inflatedQueries.add(queryListForSiblings.get(0));
-                    Log.d("Inflated Query3", "Start data download  " + String.valueOf(System.currentTimeMillis()));
-                    Log.d("Inflated Query3", "MDX query:" + String.valueOf(queryListForSiblings.get(0)));
+                        List<List<Long>> cubeInflated = c.GetCubeData(queryListForSiblings.get(0));// since last entry is the current one
+                        Log.d("Inflated Query4", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
+                        mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated, false);// assuming only 1 query entry
+                        Log.d("Inflated Query4", "Process ends  " + String.valueOf(System.currentTimeMillis()));
 
-                    List<List<Long>> cubeInflated = c.GetCubeData(CacheProcessUpto1Level.inflatedQueries.get(CacheProcessUpto1Level.inflatedQueries.size()-1));// since last entry is the current one
-                    Log.d("Inflated Query3", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
-
-                    mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated, false);// assuming only 1 query entry
-                    Log.d("Inflated Query3", "Process ends  " + String.valueOf(System.currentTimeMillis()));
-
+                    }
                 }
             }
         }
@@ -106,70 +78,73 @@ public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Voi
             String ex = e.getMessage();
         }
     }
-    private List<List<HashMap<Integer,TreeNode>>> _getSiblingsPerAxis(HashMap<Integer, TreeNode> keyValPairsForDimension,
-                                                               List<List<Integer>> allAxisDetails) {
-        List<List<HashMap<Integer, TreeNode>>> Leaves = new ArrayList<>();
-        boolean isRootNode = false;
-        for (int i = 1; i < allAxisDetails.size(); i++)// 0 th entry is for measures
+    private List<String> _generateQueryString(List<List<List<Integer>>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
+                                            HashMap<Integer,TreeNode> keyValPairsForDimension ){
+        int nQueryCount =queryDetails.size();
+        List<String> subQueries =  new ArrayList<>();
+        for(int i=0;i<nQueryCount;i++)
         {
-            List<HashMap<Integer, TreeNode>> axisWiseList = new ArrayList<>();
-            for (int j = 0; j < allAxisDetails.get(i).size(); j++) {
-                int key = allAxisDetails.get(i).get(j);
+            String querystring = this._generateSubQueryString(queryDetails.get(i), selectedMeasures, measureMap, keyValPairsForDimension);
+            subQueries.add(querystring);
 
-                    TreeNode node = keyValPairsForDimension.get(key);
-                    if (node != null) {
-                        /*// the following section deals with situations like: Education. All Customers.  We know that the server will send values for all under 'All custmers' sections
-                        // so if we go to its parent that is Education, its children will be 'All customers' which must be replaced by all those children under it.
-                        // Education.Children--> All customers but we need Bachelors, Hgh School  Graduates etc
-                        List<TreeNode> children = node.getChildren();
-                        if(children!=null && children.size()>0 && children.size()<=1)
-                        {
-                            String childName = children.get(0).getReference().toString();
-                            if(!childName.contains("All")){
-                                node = node.getParent();
-                            }
-                            else{
-                                node = children.get(0);
+        }
+        return subQueries;
+    }
 
-                            }
-                        }
-                        else{*/
-                            node = node.getParent();
-                       // }
-
-                        int nodeNo = node.getNodeCounter();
-                        // if same parent has already processed... we do not need that (avoiding 198#198#202#202 case -> 198#202 is right)
-
-                       // if (!uniqueDimensions.contains(nodeNo)) {
-                         //   uniqueDimensions.add(nodeNo);
-                            if (node.getReference().toString() != "Dimensions") {
-                                //if this is in root level, we do not need to add that
-                                HashMap<Integer, TreeNode> allLeaves = iterateTreeToGenerateChildren(node);
-                                axisWiseList.add(allLeaves);
-                            }
-                        //}
-                    } else {
-                        isRootNode = true;
-                        break;
-                    }
+    private String _generateSubQueryString(List<List<Integer>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
+                                           HashMap<Integer,TreeNode> keyValPairsForDimension){
+        MDXQProcessor mdxQ = new MDXQProcessor();
+        String sqlMeasureStatement = mdxQ.generateQueryForMeasures(selectedMeasures, measureMap);
+        int axisCount =queryDetails.size();
+        List<String> axisWiseQuery =  new ArrayList<>();
+        axisWiseQuery.add(sqlMeasureStatement);
+        for(int i=1;i<axisCount;i++)// assuming axis 0 is always for measures
+        {
+            List<Integer> dimensionkeyList = queryDetails.get(i);
+            List<String> dimensionList =  new ArrayList<>();
+            int dimensionCount = dimensionkeyList.size();
+            TreeNode  node;//= keyValPairsForDimension.get(dimensionkeyList.get(0));
+            for(int j=0;j<dimensionCount;j++)
+            {
+                node= keyValPairsForDimension.get(dimensionkeyList.get(j));
+                TreeNode pNode = node.getParent();
+                String dimensionName = pNode.getHierarchyName();
+                //we discard root node values
+                if(dimensionName.equals("[Dimension]")) {
+                    dimensionName = node.getHierarchyName();
+                }
+                dimensionName =  dimensionName.substring(dimensionName.indexOf(".")+1);// removing [Dimension] part from the string : else it will not execute
+                dimensionName += ".children";
+                if(!dimensionList.contains(dimensionName))
+                    dimensionList.add(dimensionName);
             }
-            Leaves.add(axisWiseList);
-            if (isRootNode)
-                break;
+
+            axisWiseQuery.add("{" + TextUtils.join(",", dimensionList) + "} on axis(" + (i) + ") ");
+
         }
-        //if this is in root level, we do not need to add that : simply return blank list
-        if(isRootNode){
-            return new ArrayList<>();
-        }
-        return Leaves;
+        String sqlStatement = mdxQ.generateSubQuery(axisWiseQuery);
+        return sqlStatement;
     }
 
 
-//    @Override
-//    protected String doInBackground(Void... params) {
-//        this.run();
-//
-//        return "Success";
-//    }
+    private List<List<List<Integer>>> generateNewAxisDetails(List<List<HashMap<Integer, TreeNode>>> allLeaves, List<List<List<Integer>>> allAxisDetails) {
+        List<List<List<Integer>>> newAxisDetails= new ArrayList<>();
+        List<List<Integer>> newAxis= new ArrayList<>();
+        //Add measures to the first axis
+        newAxis.add(allAxisDetails.get(0).get(0));
+        int leavesSize = allLeaves.size();
+        for (int i = 0; i <leavesSize; i++) {
+            //Individual axis
+            List<HashMap<Integer, TreeNode>> axis = allLeaves.get(i);
+            List<Integer> dimensionList = new ArrayList<>();
+            for (int j = 0; j < axis.size(); j++) {
+                dimensionList.addAll(axis.get(j).keySet());
+            }
+            newAxis.add(dimensionList);
+        }
+        newAxisDetails.add(newAxis);
+        return newAxisDetails;
+    }
+
 
 }

@@ -53,12 +53,9 @@ public class CacheProcess implements Runnable{//extends AsyncTask<Void,Void,Stri
         {
             CacheProcess.inflatedQueries = new ArrayList<>();
         }
-        if(CacheProcessUpto1Level.inflatedQueries == null)
-        {
-            CacheProcessUpto1Level.inflatedQueries = new ArrayList<>();
-        }
+
     }
-    public List<List<List<Integer>>> generateNewAxisDetails(List<List<HashMap<Integer, TreeNode>>> allLeaves, List<List<List<Integer>>> allAxisDetails) {
+    private List<List<List<Integer>>> generateNewAxisDetails(List<List<HashMap<Integer, TreeNode>>> allLeaves, List<List<List<Integer>>> allAxisDetails) {
         List<List<List<Integer>>> newAxisDetails= new ArrayList<>();
         List<List<Integer>> newAxis= new ArrayList<>();
 
@@ -84,7 +81,7 @@ public class CacheProcess implements Runnable{//extends AsyncTask<Void,Void,Stri
         return newAxisDetails;
     }
 
-    public List<List<HashMap<Integer, TreeNode>>>getLeavesPerAxis(HashMap<Integer, TreeNode> keyValPairsForDimension,
+    private List<List<HashMap<Integer, TreeNode>>>getLeavesPerAxis(HashMap<Integer, TreeNode> keyValPairsForDimension,
                                                        List<List<Integer>> allAxisDetails) {
         List<List<HashMap<Integer, TreeNode>> > Leaves = new ArrayList<>();
         this.parentEntiresPerAxis =  new ArrayList<>();
@@ -119,8 +116,7 @@ public class CacheProcess implements Runnable{//extends AsyncTask<Void,Void,Stri
                             }
                         }
                     }
-                    // old approach
-                    //parents.add(child);
+
                     HashMap<Integer,TreeNode> allLeaves = getLeaves(child, new HashMap<Integer, TreeNode>());
                     axisWiseList.add(allLeaves);
                 }
@@ -132,18 +128,10 @@ public class CacheProcess implements Runnable{//extends AsyncTask<Void,Void,Stri
     }
     public  HashMap<Integer,TreeNode> getLeaves(TreeNode parent,HashMap<Integer,TreeNode> oldLeaves){
 
-        return new CacheProcessUpto1Level().iterateTreeToGenerateChildren(parent);
+        return new MDXQProcessor().iterateTreeToGenerateChildren(parent);
 
     }
-   /* public void start ()
-    {
-        if (inflatedDataDnldThread == null)
-        {
-            inflatedDataDnldThread =new Thread (this);
-            inflatedDataDnldThread.start ();
 
-        }
-    }*/
 
     public void run() {
         try {
@@ -162,7 +150,7 @@ public class CacheProcess implements Runnable{//extends AsyncTask<Void,Void,Stri
 
             List<String>  queryListForChildren  = mdxQ.GenerateQueryString(allAxisDetails, selectedMeasures, measureMap,
                     keyValPairsForDimension, true,false);
-            if(!CacheProcessUpto1Level.inflatedQueries.contains(queryListForChildren.get(0)) && !CacheProcess.inflatedQueries.contains(queryListForChildren.get(0)))
+            if(!CacheProcess.inflatedQueries.contains(queryListForChildren.get(0)))
             {
                 Log.d("Inflated Query1", "Start data download  " + String.valueOf(System.currentTimeMillis()));
                 CacheProcess.inflatedQueries.add(queryListForChildren.get(0));
