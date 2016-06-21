@@ -30,9 +30,11 @@ public class Inflated1 implements Runnable{
     public static HashSet<String> inflatedQueries;
     private long start=0;
     List<List<HashMap<Integer, TreeNode>>> allLeaves;
+    private List<List<HashMap<Integer, TreeNode>>> allParents;
     List<List<TreeNode>> parentEntiresPerAxis;
     public Inflated1(List<List<List<Integer>>> allAxisDetails, List<Integer> selectedMeasures, HashMap<Integer, String> measureMap,
-                        HashMap<Integer, TreeNode> keyValPairsForDimension, List<List<String>> cellOrdinalCombinations, String olapURL, List<List<HashMap<Integer, TreeNode>>> allLeaves,List<List<TreeNode>> parentEntiresPerAxis)
+                        HashMap<Integer, TreeNode> keyValPairsForDimension, List<List<String>> cellOrdinalCombinations, String olapURL, List<List<HashMap<Integer, TreeNode>>> allLeaves,List<List<TreeNode>> parentEntiresPerAxis,
+                     List<List<HashMap<Integer, TreeNode>>>  allParents)
     {
         this.allAxisDetails = allAxisDetails;
         this.selectedMeasures =selectedMeasures;
@@ -43,6 +45,7 @@ public class Inflated1 implements Runnable{
         this.allLeaves = allLeaves;
         this.parentEntiresPerAxis = parentEntiresPerAxis;
         isAddChildrenToDimension = new ArrayList<>();
+        this.allParents = allParents;
         instatiateOtherThreads();
     }
     public void instatiateOtherThreads(){
@@ -157,6 +160,9 @@ public class Inflated1 implements Runnable{
         Inflated3 in3 = new Inflated3(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis);
         in3.run();
+        CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL, allParents);
+        cacheParentLevelObj.run();
 
     }
     private List<String> _generateQueryString(List<List<List<Integer>>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,

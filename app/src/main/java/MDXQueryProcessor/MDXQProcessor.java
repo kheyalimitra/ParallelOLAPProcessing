@@ -231,7 +231,7 @@ public class MDXQProcessor {
     }
     public void startAsyncThreads(String query){
         try {
-            ExecutorService executor = Executors.newFixedThreadPool(5);
+            ExecutorService executor = Executors.newFixedThreadPool(1);
             if(query !="Blank") {
                 OriginaQuery.isDownloadFinished = false;
                 OriginaQuery originalQObj = new OriginaQuery(query);
@@ -249,7 +249,7 @@ public class MDXQProcessor {
 //                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
 //            executor.execute(cache);
             Inflated1 in1 = new Inflated1(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
-                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis);
+                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis, allParents);
             executor.execute(in1);
          /*   Inflated2 in2 = new Inflated2(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                     MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis);
@@ -258,9 +258,9 @@ public class MDXQProcessor {
 //                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis);
 //            executor.execute(in3);
             // start another thread to fetch siblings data
-            CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
-                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL, allParents);
-            executor.execute(cacheParentLevelObj);
+//            CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+//                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL, allParents);
+//            executor.execute(cacheParentLevelObj);
         }
         catch(Exception e)
         {

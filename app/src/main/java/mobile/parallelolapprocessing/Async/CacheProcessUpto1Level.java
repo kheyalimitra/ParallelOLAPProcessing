@@ -23,7 +23,7 @@ import mobile.parallelolapprocessing.Inflated3;
 /**
  * Created by jayma on 2/28/2016.
  */
-public class CacheProcessUpto1Level implements Runnable{///extends AsyncTask<Void,Void,String> {
+public class CacheProcessUpto1Level {//implements Runnable{///extends AsyncTask<Void,Void,String> {
     public List<List<List<Integer>>> allAxisDetails;
     public List<Integer> selectedMeasures;
     public HashMap<Integer, String> measureMap;
