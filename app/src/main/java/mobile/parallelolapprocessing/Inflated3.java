@@ -16,7 +16,7 @@ import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
 /**
  * Created by KheyaliMitra on 6/17/2016.
  */
-public class Inflated3 implements Runnable{
+public class Inflated3 {//implements Runnable{
 
     public List<List<List<Integer>>> allAxisDetails;
     public List<Integer> selectedMeasures;
@@ -108,13 +108,13 @@ public class Inflated3 implements Runnable{
                         cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
                     }
 
-                    Log.d("Inflated Query3", "Start data download  " + String.valueOf(System.currentTimeMillis()));
+                    Log.d("Inflated Query3.1", "Start data download  " + String.valueOf(System.currentTimeMillis()));
                     inflatedQueries.add(queryListForChildren.get(0));
-                    Log.d("Inflated Query3", "MDX query: " + String.valueOf(queryListForChildren.get(0)));
+                    Log.d("Inflated Query3.1", "MDX query: " + String.valueOf(queryListForChildren.get(0)));
                     List<List<Long>> cubeInflated = c.GetCubeData(queryListForChildren.get(0));
-                    Log.d("Inflated Query3", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
+                    Log.d("Inflated Query3.1", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
                     mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated, false);// assuming only 1 query entry
-                    Log.d("Inflated Query3", "process ends " + String.valueOf(System.currentTimeMillis()));
+                    Log.d("Inflated Query3.1", "process ends " + String.valueOf(System.currentTimeMillis()));
                 }
 
         }

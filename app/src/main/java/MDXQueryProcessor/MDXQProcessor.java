@@ -254,9 +254,9 @@ public class MDXQProcessor {
             Inflated2 in2 = new Inflated2(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                     MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis);
             executor.execute(in2);
-            Inflated3 in3 = new Inflated3(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
-                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis);
-            executor.execute(in3);
+//            Inflated3 in3 = new Inflated3(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+//                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis);
+//            executor.execute(in3);
             // start another thread to fetch siblings data
             CacheProcessUpto1Level cacheParentLevelObj = new CacheProcessUpto1Level(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                     MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL, allParents);

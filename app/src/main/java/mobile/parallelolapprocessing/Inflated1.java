@@ -11,7 +11,9 @@ import java.util.List;
 import DataRetrieval.Cube;
 import DataStructure.TreeNode;
 import MDXQueryProcessor.MDXQProcessor;
+import Processor.QueryProcessor;
 import mobile.parallelolapprocessing.Async.CacheProcessUpto1Level;
+import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
 
 /**
  * Created by KheyaliMitra on 6/16/2016.
@@ -140,12 +142,19 @@ public class Inflated1 implements Runnable{
                     Log.d("Inflated Query1", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
                     mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated, false);// assuming only 1 query entry
                     Log.d("Inflated Query1", "process ends " + String.valueOf(System.currentTimeMillis()));
+                _callInflated3();
                 }
             }
 
         catch(Exception e) {
             String ex = e.getMessage();
         }
+    }
+    private void _callInflated3(){
+        Inflated3 in3 = new Inflated3(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                   MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis);
+        in3.run();
+
     }
     private List<String> _generateQueryString(List<List<List<Integer>>> queryDetails,List<Integer> selectedMeasures,HashMap<Integer,String> measureMap,
                                             HashMap<Integer,TreeNode> keyValPairsForDimension, boolean isAddDescendant,boolean isAddInflatedSiblings ){
