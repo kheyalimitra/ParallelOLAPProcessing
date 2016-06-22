@@ -240,17 +240,9 @@ public class MDXQProcessor {
             else{
                 OriginaQuery.isDownloadFinished =  true;
             }
-            List<List<HashMap<Integer, TreeNode>>> allLeaves = getLeavesPerAxis(MDXUserQuery.keyValPairsForDimension, MDXUserQuery.allAxisDetails.get(0));
-            List<List<HashMap<Integer, TreeNode>>> allParents = getSiblingsPerAxis(MDXUserQuery.keyValPairsForDimension, MDXUserQuery.allAxisDetails.get(0));
-            Log.d("Async Query", "Before calling thread pool " + String.valueOf(System.currentTimeMillis()));
 
-            // start parallel thread to fetch inflated data for leaf levels
-//            CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
-//                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
-//            executor.execute(cache);
-            Inflated1 in1 = new Inflated1(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
-                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis, allParents);
-            executor.execute(in1);
+            //InflatedQueryDownload_sequentialmanner();
+            //executor.execute(in1);
          /*   Inflated2 in2 = new Inflated2(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                     MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis);
             executor.execute(in2);*/
@@ -266,6 +258,20 @@ public class MDXQProcessor {
         {
             String s = e.getMessage();
         }
+    }
+
+    public void InflatedQueryDownload_sequentialmanner() {
+        List<List<HashMap<Integer, TreeNode>>> allLeaves = getLeavesPerAxis(MDXUserQuery.keyValPairsForDimension, MDXUserQuery.allAxisDetails.get(0));
+        List<List<HashMap<Integer, TreeNode>>> allParents = getSiblingsPerAxis(MDXUserQuery.keyValPairsForDimension, MDXUserQuery.allAxisDetails.get(0));
+        //Log.d("Async Query", "Before calling thread pool " + String.valueOf(System.currentTimeMillis()));
+
+        // start parallel thread to fetch inflated data for leaf levels
+//            CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+//                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
+//            executor.execute(cache);
+        Inflated1 in1 = new Inflated1(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis, allParents);
+        in1.run();
     }
 
 

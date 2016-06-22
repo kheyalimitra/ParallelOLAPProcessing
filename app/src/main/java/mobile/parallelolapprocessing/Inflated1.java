@@ -18,7 +18,7 @@ import mobile.parallelolapprocessing.Async.Call.MDXUserQuery;
 /**
  * Created by KheyaliMitra on 6/16/2016.
  */
-public class Inflated1 implements Runnable{
+public class Inflated1 {//implements Runnable{
 
     public List<List<List<Integer>>> allAxisDetails;
     public List<Integer> selectedMeasures;

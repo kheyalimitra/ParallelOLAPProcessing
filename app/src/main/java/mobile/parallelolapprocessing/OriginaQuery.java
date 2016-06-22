@@ -33,6 +33,8 @@ public class OriginaQuery implements Runnable{
             isDownloadFinished = true;
             Log.d("Original Query", "Query process ends " + String.valueOf(System.currentTimeMillis()));
             Log.d("Original Query","MDX query:"+ String.valueOf(userQuery));
+            new MDXQProcessor().InflatedQueryDownload_sequentialmanner();
+
         }
         catch(Exception e) {
             String ex = e.getMessage();

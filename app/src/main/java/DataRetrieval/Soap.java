@@ -43,7 +43,7 @@ public class Soap {
         //Initialize soap request object
         SoapObject request = new SoapObject(WSDL_TARGET_NAMESPACE, OperationName);
         if (Parameters != null) {
-            //Sets all operations and parameters
+            //Sets all o perations and parameters
             for (HashMap.Entry<String, Object> entry : Parameters.entrySet()) {
                 request.addProperty(entry.getKey(), entry.getValue());
             }
