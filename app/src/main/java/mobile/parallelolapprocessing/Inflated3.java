@@ -99,11 +99,11 @@ public class Inflated3 {//implements Runnable{
 
             List<String>  queryListForChildren  = _generateQueryString(allAxisDetails, selectedMeasures, measureMap,
                     keyValPairsForDimension, true,false);
-            if (!inflatedQueries.contains(queryListForChildren.get(0)) &&
+            /*if (!inflatedQueries.contains(queryListForChildren.get(0)) &&
                     !Inflated1.inflatedQueries.contains(queryListForChildren.get(0)) &&
                     !Inflated2.inflatedQueries.contains(queryListForChildren.get(0)) &&
                     !CacheProcessUpto1Level.inflatedQueries.contains(queryListForChildren.get(0))){
-                int queryCount = allAxisDetails.size();
+            */    {int queryCount = allAxisDetails.size();
                     for (int i = 0; i < queryCount; i++) {
                         cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
                     }

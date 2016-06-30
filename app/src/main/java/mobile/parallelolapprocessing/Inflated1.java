@@ -130,11 +130,11 @@ public class Inflated1 {//implements Runnable{
             List<String> queryListForChildren = _generateQueryString(allAxisDetails, selectedMeasures, measureMap,
                     keyValPairsForDimension, true, false);
 
-            if (!inflatedQueries.contains(queryListForChildren.get(0)) &&
+            /*if (!inflatedQueries.contains(queryListForChildren.get(0)) &&
                     !Inflated3.inflatedQueries.contains(queryListForChildren.get(0)) &&
                     !Inflated2.inflatedQueries.contains(queryListForChildren.get(0)) &&
                     !CacheProcessUpto1Level.inflatedQueries.contains(queryListForChildren.get(0))){
-                    int queryCount = allAxisDetails.size();
+           */       {  int queryCount = allAxisDetails.size();
                     for (int i = 0; i < queryCount; i++) {
                         cellOrdinalCombinations.add(mdxQ.GenerateCellOrdinal(newAxisDetails.get(i)));
                     }
@@ -145,7 +145,7 @@ public class Inflated1 {//implements Runnable{
                     Log.d("Inflated Query1", "MDX query down load ends: " + String.valueOf(System.currentTimeMillis()));
                     mdxQ.CheckAndPopulateCache(cellOrdinalCombinations.get(0), this.parentEntiresPerAxis, cubeInflated, false);// assuming only 1 query entry
                     Log.d("Inflated Query1", "process ends " + String.valueOf(System.currentTimeMillis()));
-                _callInflated3();
+                //_callInflated3();
                 }
             }
 
