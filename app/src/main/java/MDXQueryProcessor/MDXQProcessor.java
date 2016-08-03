@@ -269,10 +269,15 @@ public class MDXQProcessor {
 //            CacheProcess cache = new CacheProcess(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
 //                    MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL);
 //            executor.execute(cache);
+        Inflated1 in1 = new Inflated1(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis, allParents);
+        in1.run();
+        Inflated2 in2 = new Inflated2(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
+                MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis);
+        in2.run();
         Inflated3 in3 = new Inflated3(MDXUserQuery.allAxisDetails, MDXUserQuery.selectedMeasures, MDXUserQuery.measureMap, MDXUserQuery.keyValPairsForDimension,
                 MDXUserQuery.cellOrdinalCombinations, QueryProcessor.olapServiceURL,allLeaves,parentEntiresPerAxis);
-        in3.run();
-        in3.run();
+
         in3.run();
         in3.run();
     }
